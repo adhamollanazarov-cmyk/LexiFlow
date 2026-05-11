@@ -1,0 +1,44 @@
+from fastapi import APIRouter, Depends, HTTPException, Query
+
+from app.middleware.auth import get_current_user
+from app.models.schemas import VocabularyListResponse, WordCreate, WordResponse
+from app.services.supabase_service import delete_word, get_words, save_word
+
+router = APIRouter()
+
+
+@router.post("/api/vocabulary")
+async def create_vocabulary_word(
+    word: WordCreate,
+    user_id: str = Depends(get_current_user),
+) -> dict[str, str]:
+    inserted_word = await save_word(user_id, word)
+
+    return {"id": str(inserted_word["id"]), "message": "saved"}
+
+
+@router.get("/api/vocabulary", response_model=VocabularyListResponse)
+async def list_vocabulary_words(
+    limit: int = Query(50, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    user_id: str = Depends(get_current_user),
+) -> VocabularyListResponse:
+    words, total = await get_words(user_id, limit, offset)
+
+    return VocabularyListResponse(
+        words=[WordResponse(**word) for word in words],
+        total=total,
+    )
+
+
+@router.delete("/api/vocabulary/{word_id}")
+async def remove_vocabulary_word(
+    word_id: str,
+    user_id: str = Depends(get_current_user),
+) -> dict[str, str]:
+    deleted = await delete_word(word_id, user_id)
+
+    if not deleted:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    return {"message": "deleted"}
