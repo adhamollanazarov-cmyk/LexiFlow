@@ -113,7 +113,7 @@ export function TranslationPopup({
         const data = (await response.json()) as TranslateResponse;
 
         if (isActive) {
-          setTranslation(data.translation);
+          setTranslation(data.tran  slation);
         }
       } catch {
         if (isActive) {
