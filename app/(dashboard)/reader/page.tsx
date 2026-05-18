@@ -26,6 +26,12 @@ type PopupPosition = {
   y: number;
 };
 
+type WordTapPayload = {
+  word: string;
+  x: number;
+  y: number;
+};
+
 function truncateFilename(filename: string) {
   if (filename.length <= 30) {
     return filename;
@@ -338,6 +344,22 @@ export default function ReaderPage() {
     };
   }, [pdfFile]);
 
+  function handleWordTap({ word, x, y }: WordTapPayload) {
+    const text = word.trim();
+
+    if (text.length < 2 || text.length > 100) {
+      return;
+    }
+
+    setSelectedText(text);
+    setContextSentence(getSentenceContext(text));
+    setPopupPosition({
+      x,
+      y: y + window.scrollY + 8
+    });
+    setShowPopup(true);
+  }
+
   async function handleSave(word: string, translation: string) {
     setSaveError("");
 
@@ -589,8 +611,12 @@ export default function ReaderPage() {
       </div>
 
       <div ref={documentContentRef} className="max-w-full overflow-x-hidden px-2 py-6 sm:px-6 sm:py-8">
-        {fileType === "pdf" ? <PDFViewer file={pdfFile} /> : null}
-        {fileType === "docx" ? <DOCXViewer file={pdfFile} /> : null}
+        {fileType === "pdf" ? (
+          <PDFViewer file={pdfFile} onWordTap={handleWordTap} />
+        ) : null}
+        {fileType === "docx" ? (
+          <DOCXViewer file={pdfFile} onWordTap={handleWordTap} />
+        ) : null}
         {saveError ? (
           <p className="mx-auto mt-4 max-w-4xl rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {saveError}

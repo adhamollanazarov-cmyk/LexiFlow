@@ -1,20 +1,80 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { MouseEvent, TouchEvent, useEffect, useState } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/TextLayer.css";
 
 pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
 
+type WordTapPayload = {
+  word: string;
+  x: number;
+  y: number;
+};
+
 type PDFViewerProps = {
   file: File;
+  onWordTap?: (payload: WordTapPayload) => void;
 };
 
 type PDFLoadSuccess = {
   numPages: number;
 };
 
-export function PDFViewer({ file }: PDFViewerProps) {
+function isWordChar(character: string) {
+  return /[\p{L}\p{N}'’-]/u.test(character);
+}
+
+function getRangeFromPoint(x: number, y: number) {
+  const documentWithCaret = document as Document & {
+    caretRangeFromPoint?: (pointX: number, pointY: number) => Range | null;
+    caretPositionFromPoint?: (
+      pointX: number,
+      pointY: number
+    ) => { offsetNode: Node; offset: number } | null;
+  };
+
+  if (documentWithCaret.caretRangeFromPoint) {
+    return documentWithCaret.caretRangeFromPoint(x, y);
+  }
+
+  const position = documentWithCaret.caretPositionFromPoint?.(x, y);
+
+  if (!position) {
+    return null;
+  }
+
+  const range = document.createRange();
+  range.setStart(position.offsetNode, position.offset);
+  range.collapse(true);
+
+  return range;
+}
+
+function getWordFromPoint(x: number, y: number) {
+  const range = getRangeFromPoint(x, y);
+  const textNode = range?.startContainer;
+
+  if (!range || !textNode || textNode.nodeType !== Node.TEXT_NODE) {
+    return "";
+  }
+
+  const text = textNode.textContent ?? "";
+  let start = range.startOffset;
+  let end = range.startOffset;
+
+  while (start > 0 && isWordChar(text[start - 1])) {
+    start -= 1;
+  }
+
+  while (end < text.length && isWordChar(text[end])) {
+    end += 1;
+  }
+
+  return text.slice(start, end).trim();
+}
+
+export function PDFViewer({ file, onWordTap }: PDFViewerProps) {
   const [fileUrl, setFileUrl] = useState<string>("");
   const [numPages, setNumPages] = useState<number>(0);
   const [hasError, setHasError] = useState(false);
@@ -39,6 +99,33 @@ export function PDFViewer({ file }: PDFViewerProps) {
     setHasError(true);
   }
 
+  function handleWordTapAtPoint(x: number, y: number) {
+    const word = getWordFromPoint(x, y);
+
+    if (word) {
+      onWordTap?.({ word, x, y });
+    }
+  }
+
+  function handleClick(event: MouseEvent<HTMLDivElement>) {
+    if (window.getSelection()?.toString().trim()) {
+      return;
+    }
+
+    handleWordTapAtPoint(event.clientX, event.clientY);
+  }
+
+  function handleTouchEnd(event: TouchEvent<HTMLDivElement>) {
+    const touch = event.changedTouches[0];
+
+    if (!touch) {
+      return;
+    }
+
+    event.preventDefault();
+    handleWordTapAtPoint(touch.clientX, touch.clientY);
+  }
+
   if (hasError) {
     return (
       <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -59,7 +146,11 @@ export function PDFViewer({ file }: PDFViewerProps) {
     typeof window === "undefined" ? 750 : Math.min(750, window.innerWidth - 32);
 
   return (
-    <div className="flex max-w-full justify-center overflow-x-hidden">
+    <div
+      onClick={handleClick}
+      onTouchEnd={handleTouchEnd}
+      className="flex max-w-full select-none justify-center overflow-x-hidden [-webkit-touch-callout:none] [-webkit-user-select:none] md:select-text md:[-webkit-user-select:text]"
+    >
       <Document
         file={fileUrl}
         loading={
