@@ -136,6 +136,7 @@ export default function ReaderPage() {
   const [savedCount, setSavedCount] = useState(0);
   const [streak, setStreak] = useState<number>(0);
   const [dragOver, setDragOver] = useState(false);
+  const [fileError, setFileError] = useState<string | null>(null);
   const [sizeError, setSizeError] = useState("");
   const [saveError, setSaveError] = useState("");
 
@@ -261,6 +262,14 @@ export default function ReaderPage() {
   }, [fileType, pdfFile, setDetectedSourceLang]);
 
   function handleFile(nextFile: File) {
+    setFileError(null);
+    setSizeError("");
+
+    if (nextFile.size > MAX_FILE_SIZE) {
+      setFileError("File is too large. Maximum size is 50MB.");
+      return;
+    }
+
     const fileName = nextFile.name.toLowerCase();
     const isPDF =
       nextFile.type === "application/pdf" || fileName.endsWith(".pdf");
@@ -272,12 +281,8 @@ export default function ReaderPage() {
       return;
     }
 
-    if (nextFile.size > MAX_FILE_SIZE) {
-      setSizeError("File too large (max 50MB)");
-      return;
-    }
-
     setPdfFile(nextFile);
+    setFileError(null);
     setSizeError("");
   }
 
@@ -500,6 +505,13 @@ export default function ReaderPage() {
               ✅ Supports PDF and DOCX files
             </p>
           </div>
+
+          {fileError ? (
+            <div className="mt-3 flex items-center gap-2 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-500">
+              <span>⚠️</span>
+              <span>{fileError}</span>
+            </div>
+          ) : null}
 
           <div className="mt-6 flex w-full flex-col items-start gap-4 rounded-xl border border-blue-100 bg-blue-50 px-5 py-4 text-left shadow-sm sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
