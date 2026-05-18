@@ -48,6 +48,75 @@ function getSentenceContext(selectedText: string): string {
   return bodyText.slice(start, end);
 }
 
+function ShieldIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" aria-hidden="true">
+      <path
+        d="M12 3 5 6v5c0 4.4 2.8 8.3 7 9.7 4.2-1.4 7-5.3 7-9.7V6l-7-3Z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+      <path
+        d="m9 12 2 2 4-5"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function UploadIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" aria-hidden="true">
+      <path
+        d="M7 18a5 5 0 0 1 .8-9.9A6 6 0 0 1 19 10a4 4 0 0 1-1 7.9"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M12 19V11m0 0-3 3m3-3 3 3"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function BookOpenIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" aria-hidden="true">
+      <path
+        d="M12 7v14M4 5.5A3.5 3.5 0 0 1 7.5 2H12v19H7.5A3.5 3.5 0 0 0 4 17.5v-12ZM20 5.5A3.5 3.5 0 0 0 16.5 2H12v19h4.5a3.5 3.5 0 0 1 3.5-3.5v-12Z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function BookmarkIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" aria-hidden="true">
+      <path
+        d="M6 4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18l-6-4-6 4V4Z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export default function ReaderPage() {
   const { pdfFile, pdfName, setDetectedSourceLang, setPdfFile } = useReader();
   const documentContentRef = useRef<HTMLDivElement | null>(null);
@@ -63,6 +132,7 @@ export default function ReaderPage() {
   const [dragOver, setDragOver] = useState(false);
   const [sizeError, setSizeError] = useState("");
   const [saveError, setSaveError] = useState("");
+
   const fileType = useMemo<ReaderFileType>(() => {
     if (!pdfFile) {
       return null;
@@ -334,53 +404,170 @@ export default function ReaderPage() {
 
   if (!pdfFile) {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center bg-slate-50 p-8">
-        <div
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-          className={`flex w-full max-w-2xl flex-col items-center justify-center rounded-md border-2 border-dashed bg-white px-8 py-16 text-center shadow-sm transition ${
-            dragOver ? "border-slate-950" : "border-slate-300"
-          }`}
-        >
-          <div className="text-5xl">📄</div>
-          <h1 className="mt-6 text-2xl font-semibold tracking-normal text-slate-950">
-            Drop your PDF or DOCX here
+      <main className="min-h-[calc(100vh-8rem)] bg-slate-50 px-4 py-8 sm:px-6">
+        <section className="mx-auto flex max-w-3xl flex-col items-center text-center">
+          <h1 className="text-3xl font-bold tracking-normal text-slate-950 sm:text-4xl">
+            Let&apos;s get started ✨
           </h1>
-          <p className="mt-3 text-sm text-slate-500">or</p>
+          <p className="mt-3 text-sm font-medium text-slate-500">
+            Upload a document to begin reading
+          </p>
 
-          <label className="mt-5 cursor-pointer rounded-md bg-slate-950 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800">
-            Choose PDF or DOCX
-            <input
-              type="file"
-              accept=".pdf,.docx"
-              onChange={handleFileInput}
-              className="sr-only"
-            />
-          </label>
-        </div>
+          <div
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            className={`mt-8 flex w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed bg-white/80 px-6 py-10 shadow-sm transition sm:px-10 sm:py-12 ${
+              dragOver ? "border-[#4F6EF7] bg-blue-50/60" : "border-slate-300"
+            }`}
+          >
+            <div className="relative flex h-24 w-24 items-center justify-center">
+              <div className="absolute inset-0 rounded-3xl bg-blue-100 blur-xl" />
+              <svg
+                className="relative h-20 w-20 drop-shadow-lg"
+                viewBox="0 0 96 96"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M25 12h31l18 18v49a8 8 0 0 1-8 8H25a8 8 0 0 1-8-8V20a8 8 0 0 1 8-8Z"
+                  fill="#DBEAFE"
+                  stroke="#4F6EF7"
+                  strokeWidth="3"
+                />
+                <path d="M56 13v19h18" fill="#BFDBFE" />
+                <path
+                  d="M56 13v19h18"
+                  stroke="#4F6EF7"
+                  strokeWidth="3"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M34 43h22M34 55h28M34 67h18"
+                  stroke="#93C5FD"
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                />
+                <circle cx="62" cy="67" r="16" fill="#4F6EF7" />
+                <path
+                  d="M62 75V59M55 66l7-7 7 7"
+                  stroke="white"
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
 
-        <div className="mt-6 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700">
-          🔒 Your file never leaves your device
-        </div>
+            <h2 className="mt-6 text-lg font-bold tracking-normal text-slate-950">
+              Drop your PDF or DOCX here
+            </h2>
+            <p className="mt-3 text-sm text-slate-500">or</p>
 
-        {sizeError ? (
-          <p className="mt-4 text-sm font-medium text-red-600">{sizeError}</p>
-        ) : null}
+            <label className="mt-5 flex w-full max-w-xs cursor-pointer items-center justify-center rounded-lg bg-[#4F6EF7] px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-200 transition hover:bg-indigo-600">
+              📁 Choose file
+              <input
+                type="file"
+                accept=".pdf,.docx"
+                onChange={handleFileInput}
+                className="sr-only"
+              />
+            </label>
+
+            <p className="mt-4 text-xs font-semibold text-emerald-600">
+              ✅ Supports PDF and DOCX files
+            </p>
+          </div>
+
+          <div className="mt-6 flex w-full flex-col gap-4 rounded-xl border border-blue-100 bg-blue-50 px-5 py-4 text-left shadow-sm sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-[#4F6EF7] ring-1 ring-blue-100">
+                <ShieldIcon />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-slate-950">
+                  Your files never leave your device
+                </p>
+                <p className="mt-1 text-xs leading-5 text-slate-500">
+                  All processing happens locally in your browser.
+                </p>
+              </div>
+            </div>
+            <a
+              href="#how-it-works"
+              className="text-sm font-semibold text-[#4F6EF7] transition hover:text-indigo-600"
+            >
+              Learn more →
+            </a>
+          </div>
+
+          {sizeError ? (
+            <p className="mt-4 text-sm font-medium text-red-600">
+              {sizeError}
+            </p>
+          ) : null}
+
+          <section id="how-it-works" className="mt-10 w-full text-left">
+            <h2 className="text-base font-bold text-slate-950">How it works</h2>
+            <div className="mt-5 grid gap-4 md:grid-cols-[1fr_auto_1fr_auto_1fr] md:items-start">
+              <div className="flex flex-col items-center rounded-2xl bg-white p-5 text-center shadow-sm ring-1 ring-slate-100">
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-[#4F6EF7]">
+                  <UploadIcon />
+                </div>
+                <p className="mt-4 text-sm font-bold text-slate-950">
+                  1 Upload
+                </p>
+                <p className="mt-2 text-xs leading-5 text-slate-500">
+                  Add your PDF or DOCX file
+                </p>
+              </div>
+
+              <div className="hidden pt-10 text-xl font-semibold text-slate-300 md:block">
+                &gt;
+              </div>
+
+              <div className="flex flex-col items-center rounded-2xl bg-white p-5 text-center shadow-sm ring-1 ring-slate-100">
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-[#4F6EF7]">
+                  <BookOpenIcon />
+                </div>
+                <p className="mt-4 text-sm font-bold text-slate-950">2 Read</p>
+                <p className="mt-2 text-xs leading-5 text-slate-500">
+                  Read comfortably with focus
+                </p>
+              </div>
+
+              <div className="hidden pt-10 text-xl font-semibold text-slate-300 md:block">
+                &gt;
+              </div>
+
+              <div className="flex flex-col items-center rounded-2xl bg-white p-5 text-center shadow-sm ring-1 ring-slate-100">
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-[#4F6EF7]">
+                  <BookmarkIcon />
+                </div>
+                <p className="mt-4 text-sm font-bold text-slate-950">
+                  3 Save Words
+                </p>
+                <p className="mt-2 text-xs leading-5 text-slate-500">
+                  Save new words and build your vocabulary
+                </p>
+              </div>
+            </div>
+          </section>
+        </section>
       </main>
     );
   }
 
   return (
     <main className="min-h-screen bg-slate-50">
-      <div className="sticky top-0 z-40 bg-white shadow-sm">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4">
-          <p className="truncate text-sm font-semibold text-slate-950">
+      <div className="sticky top-0 z-40 border-b border-slate-200 bg-white shadow-sm">
+        <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <p className="min-w-0 max-w-full truncate text-sm font-bold text-slate-950 sm:max-w-md">
             {truncateFilename(pdfName ?? "Untitled document")}
           </p>
 
-          <div className="flex items-center gap-3">
-            <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-medium text-slate-700">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            <span className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700">
               💾 {savedCount} saved
             </span>
             <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-sm font-medium text-amber-700">
