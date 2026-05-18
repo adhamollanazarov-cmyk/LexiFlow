@@ -1,7 +1,14 @@
 "use client";
 
 import { useReader } from "@/context/ReaderContext";
-import { ChangeEvent, DragEvent, useEffect, useMemo, useState } from "react";
+import {
+  ChangeEvent,
+  DragEvent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+} from "react";
 import { DOCXViewer } from "@/components/reader/DOCXViewer";
 import { PDFViewer } from "@/components/reader/PDFViewer";
 import { TranslationPopup } from "@/components/reader/TranslationPopup";
@@ -42,7 +49,8 @@ function getSentenceContext(selectedText: string): string {
 }
 
 export default function ReaderPage() {
-  const { pdfFile, pdfName, setPdfFile } = useReader();
+  const { pdfFile, pdfName, setDetectedSourceLang, setPdfFile } = useReader();
+  const documentContentRef = useRef<HTMLDivElement | null>(null);
   const [selectedText, setSelectedText] = useState("");
   const [contextSentence, setContextSentence] = useState("");
   const [popupPosition, setPopupPosition] = useState<PopupPosition>({
@@ -110,6 +118,71 @@ export default function ReaderPage() {
 
     fetchStreak();
   }, []);
+
+  useEffect(() => {
+    if (!pdfFile || !fileType) {
+      return;
+    }
+
+    let isActive = true;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+    async function detectRenderedLanguage(attempt = 0) {
+      const text = documentContentRef.current?.innerText.trim() ?? "";
+      const textSample = text.slice(0, 500);
+
+      if (textSample.length < 20 && attempt < 6) {
+        timeoutId = setTimeout(() => {
+          detectRenderedLanguage(attempt + 1);
+        }, 600);
+        return;
+      }
+
+      if (textSample.length < 20) {
+        return;
+      }
+
+      try {
+        const token = await getAccessToken();
+
+        if (!token) {
+          return;
+        }
+
+        const response = await fetch(API_ROUTES.detectLanguage, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ text: textSample })
+        });
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data = (await response.json()) as { detected_lang?: string } | null;
+
+        if (isActive && data?.detected_lang) {
+          setDetectedSourceLang(data.detected_lang);
+        }
+      } catch {
+        return;
+      }
+    }
+
+    timeoutId = setTimeout(() => {
+      detectRenderedLanguage();
+    }, 800);
+
+    return () => {
+      isActive = false;
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [fileType, pdfFile, setDetectedSourceLang]);
 
   function handleFile(nextFile: File) {
     const fileName = nextFile.name.toLowerCase();
@@ -252,6 +325,7 @@ export default function ReaderPage() {
 
   function handleCloseFile() {
     setPdfFile(null);
+    setDetectedSourceLang(null);
     setSavedCount(0);
     setSelectedText("");
     setContextSentence("");
@@ -323,7 +397,7 @@ export default function ReaderPage() {
         </div>
       </div>
 
-      <div className="px-6 py-8">
+      <div ref={documentContentRef} className="px-6 py-8">
         {fileType === "pdf" ? <PDFViewer file={pdfFile} /> : null}
         {fileType === "docx" ? <DOCXViewer file={pdfFile} /> : null}
         {saveError ? (

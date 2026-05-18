@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useReader } from "@/context/ReaderContext";
 import { API_ROUTES } from "@/lib/api";
 import { createClient } from "@/lib/supabase/client";
 
@@ -102,6 +103,7 @@ export function TranslationPopup({
   onClose,
   onSave
 }: TranslationPopupProps) {
+  const { detectedSourceLang } = useReader();
   const popupRef = useRef<HTMLDivElement | null>(null);
   const [activeTab, setActiveTab] = useState<ActiveTab>("translation");
   const [translation, setTranslation] = useState<string | null>(null);
@@ -194,7 +196,7 @@ export function TranslationPopup({
           },
           body: JSON.stringify({
             text: selectedText,
-            source_lang: preferences.sourceLang,
+            source_lang: detectedSourceLang ?? preferences.sourceLang,
             target_lang: preferences.targetLang
           })
         });
@@ -291,7 +293,11 @@ export function TranslationPopup({
           sentence: contextSentence,
           target_lang: languagePreferences.targetLang,
           ui_language:
-            LANGUAGE_NAME_BY_CODE[languagePreferences.targetLang] ?? "English"
+            LANGUAGE_NAME_BY_CODE[languagePreferences.targetLang] ?? "English",
+          source_language:
+            LANGUAGE_NAME_BY_CODE[
+              detectedSourceLang ?? languagePreferences.sourceLang
+            ] ?? "German"
         })
       });
 

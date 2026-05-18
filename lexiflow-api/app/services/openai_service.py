@@ -4,7 +4,12 @@ from openai import AsyncOpenAI, OpenAIError
 from app.core.config import settings
 
 
-async def get_explanation(word: str, sentence: str, ui_language: str) -> str:
+async def get_explanation(
+    word: str,
+    sentence: str,
+    ui_language: str,
+    source_language: str,
+) -> str:
     if not settings.OPENAI_API_KEY:
         raise HTTPException(
             status_code=503,
@@ -17,14 +22,14 @@ async def get_explanation(word: str, sentence: str, ui_language: str) -> str:
     system_prompt = (
         f"You are a language learning assistant. Always respond in {ui_language}.\n"
         "For the given word or phrase, provide:\n"
-        "1. A short explanation in context (2-3 sentences)\n"
-        "2. Two natural example sentences using this word\n\n"
+        f"1. A short explanation in context (2-3 sentences) - write this in {ui_language}\n"
+        f"2. Two natural example sentences using this word - write these in {source_language}\n\n"
         "Format your response exactly like this:\n"
         "📖 Explanation:\n"
-        "[explanation here]\n\n"
+        f"[explanation in {ui_language}]\n\n"
         "✏️ Examples:\n"
-        "1. [first example sentence]\n"
-        "2. [second example sentence]"
+        f"1. [first example sentence in {source_language}]\n"
+        f"2. [second example sentence in {source_language}]"
     )
 
     try:

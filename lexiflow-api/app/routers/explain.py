@@ -17,6 +17,7 @@ async def explain_word(
             request.word,
             request.sentence[:300],
             request.ui_language,
+            request.source_language,
         )
     except HTTPException:
         raise

@@ -5,7 +5,15 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.routers import explain, telegram, telegram_webhook, translate, user, vocabulary
+from app.routers import (
+    detect_language,
+    explain,
+    telegram,
+    telegram_webhook,
+    translate,
+    user,
+    vocabulary,
+)
 from app.services.telegram_service import shutdown_scheduler, start_scheduler
 
 logging.basicConfig(level=logging.INFO)
@@ -31,6 +39,7 @@ app.add_middleware(
 )
 
 app.include_router(translate.router)
+app.include_router(detect_language.router)
 app.include_router(explain.router)
 app.include_router(vocabulary.router)
 app.include_router(user.router)

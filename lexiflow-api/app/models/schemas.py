@@ -17,10 +17,19 @@ class ExplainRequest(BaseModel):
     sentence: str
     target_lang: str = "RU"
     ui_language: str = "English"
+    source_language: str = "German"
 
 
 class ExplainResponse(BaseModel):
     explanation: str
+
+
+class DetectLanguageRequest(BaseModel):
+    text: str = Field(..., min_length=1, max_length=500)
+
+
+class DetectLanguageResponse(BaseModel):
+    detected_lang: str
 
 
 class WordCreate(BaseModel):
