@@ -37,9 +37,63 @@ type LanguagePreferences = {
   targetLang: string;
 };
 
+type ParsedExplanation = {
+  explanationText: string;
+  examples: string[];
+};
+
 const POPUP_WIDTH = 320;
 const POPUP_HEIGHT = 280;
 const VIEWPORT_MARGIN = 16;
+const EXAMPLES_MARKER = "✏️ Examples:";
+const LANGUAGE_NAME_BY_CODE: Record<string, string> = {
+  "EN-US": "English",
+  "EN-GB": "English",
+  RU: "Russian",
+  DE: "German",
+  FR: "French",
+  ES: "Spanish",
+  UZ: "Uzbek",
+  TR: "Turkish"
+};
+
+function parseExplanationResponse(response: string): ParsedExplanation {
+  const [rawExplanation, rawExamples = ""] = response.split(EXAMPLES_MARKER);
+  const explanationText = rawExplanation
+    .replace("📖 Explanation:", "")
+    .trim();
+  const examples = rawExamples
+    .split(/\r?\n/)
+    .map((line) => line.replace(/^\d+\.\s*/, "").trim())
+    .filter(Boolean)
+    .slice(0, 2);
+
+  return { explanationText, examples };
+}
+
+function FormattedExplanation({ text }: { text: string }) {
+  const { explanationText, examples } = parseExplanationResponse(text);
+
+  if (!examples.length) {
+    return <p className="text-sm leading-6 text-slate-700">{text}</p>;
+  }
+
+  return (
+    <div className="space-y-3">
+      <p className="text-sm leading-6 text-slate-700">{explanationText}</p>
+      <div className="rounded-md bg-slate-50 p-3 ring-1 ring-slate-200">
+        <p className="text-xs font-semibold uppercase tracking-normal text-slate-500">
+          Examples
+        </p>
+        <ol className="mt-2 list-decimal space-y-2 pl-4 text-sm leading-6 text-slate-700">
+          {examples.map((example) => (
+            <li key={example}>{example}</li>
+          ))}
+        </ol>
+      </div>
+    </div>
+  );
+}
 
 export function TranslationPopup({
   selectedText,
@@ -236,7 +290,8 @@ export function TranslationPopup({
           word: selectedText,
           sentence: contextSentence,
           target_lang: languagePreferences.targetLang,
-          ui_language: "English"
+          ui_language:
+            LANGUAGE_NAME_BY_CODE[languagePreferences.targetLang] ?? "English"
         })
       });
 
@@ -356,7 +411,7 @@ export function TranslationPopup({
             ) : null}
 
             {!isLoadingExplain && explanation ? (
-              <p className="text-sm leading-6 text-slate-700">{explanation}</p>
+              <FormattedExplanation text={explanation} />
             ) : null}
 
             {!isLoadingExplain && explainError ? (

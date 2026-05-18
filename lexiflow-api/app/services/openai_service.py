@@ -15,9 +15,16 @@ async def get_explanation(word: str, sentence: str, ui_language: str) -> str:
     context_sentence = sentence[:300]
 
     system_prompt = (
-        "You are a language learning assistant. Explain the meaning of the "
-        "given word or phrase in context. "
-        f"Always respond in {ui_language}. Be concise, max 3 sentences."
+        f"You are a language learning assistant. Always respond in {ui_language}.\n"
+        "For the given word or phrase, provide:\n"
+        "1. A short explanation in context (2-3 sentences)\n"
+        "2. Two natural example sentences using this word\n\n"
+        "Format your response exactly like this:\n"
+        "📖 Explanation:\n"
+        "[explanation here]\n\n"
+        "✏️ Examples:\n"
+        "1. [first example sentence]\n"
+        "2. [second example sentence]"
     )
 
     try:
