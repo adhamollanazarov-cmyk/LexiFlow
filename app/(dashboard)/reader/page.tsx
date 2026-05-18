@@ -1,7 +1,7 @@
 "use client";
 
-import { useReader } from "@/lib/reader-context";
-import { ChangeEvent, DragEvent, useEffect, useState } from "react";
+import { useReader } from "@/context/ReaderContext";
+import { ChangeEvent, DragEvent, useEffect, useMemo, useState } from "react";
 import { DOCXViewer } from "@/components/reader/DOCXViewer";
 import { PDFViewer } from "@/components/reader/PDFViewer";
 import { TranslationPopup } from "@/components/reader/TranslationPopup";
@@ -42,7 +42,7 @@ function getSentenceContext(selectedText: string): string {
 }
 
 export default function ReaderPage() {
-  const { file, setFile } = useReader();
+  const { pdfFile, pdfName, setPdfFile } = useReader();
   const [selectedText, setSelectedText] = useState("");
   const [contextSentence, setContextSentence] = useState("");
   const [popupPosition, setPopupPosition] = useState<PopupPosition>({
@@ -54,8 +54,24 @@ export default function ReaderPage() {
   const [streak, setStreak] = useState<number>(0);
   const [dragOver, setDragOver] = useState(false);
   const [sizeError, setSizeError] = useState("");
-  const [fileType, setFileType] = useState<ReaderFileType>(null);
   const [saveError, setSaveError] = useState("");
+  const fileType = useMemo<ReaderFileType>(() => {
+    if (!pdfFile) {
+      return null;
+    }
+
+    const fileName = pdfFile.name.toLowerCase();
+
+    if (pdfFile.type === "application/pdf" || fileName.endsWith(".pdf")) {
+      return "pdf";
+    }
+
+    if (pdfFile.type === DOCX_MIME_TYPE || fileName.endsWith(".docx")) {
+      return "docx";
+    }
+
+    return null;
+  }, [pdfFile]);
 
   async function getAccessToken() {
     const supabase = createClient();
@@ -112,8 +128,7 @@ export default function ReaderPage() {
       return;
     }
 
-    setFile(nextFile);
-    setFileType(isPDF ? "pdf" : "docx");
+    setPdfFile(nextFile);
     setSizeError("");
   }
 
@@ -144,7 +159,7 @@ export default function ReaderPage() {
   }
 
   useEffect(() => {
-    if (!file) {
+    if (!pdfFile) {
       return;
     }
 
@@ -178,7 +193,7 @@ export default function ReaderPage() {
     return () => {
       document.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [file]);
+  }, [pdfFile]);
 
   async function handleSave(word: string, translation: string) {
     setSaveError("");
@@ -200,7 +215,7 @@ export default function ReaderPage() {
           original: word,
           translation,
           context_sentence: contextSentence,
-          document_name: file?.name ?? ""
+          document_name: pdfName ?? ""
         })
       });
 
@@ -236,15 +251,14 @@ export default function ReaderPage() {
   }
 
   function handleCloseFile() {
-    setFile(null);
-    setFileType(null);
+    setPdfFile(null);
     setSavedCount(0);
     setSelectedText("");
     setContextSentence("");
     setShowPopup(false);
   }
 
-  if (!file) {
+  if (!pdfFile) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center bg-slate-50 p-8">
         <div
@@ -288,7 +302,7 @@ export default function ReaderPage() {
       <div className="sticky top-0 z-40 bg-white shadow-sm">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4">
           <p className="truncate text-sm font-semibold text-slate-950">
-            {truncateFilename(file.name)}
+            {truncateFilename(pdfName ?? "Untitled document")}
           </p>
 
           <div className="flex items-center gap-3">
@@ -310,8 +324,8 @@ export default function ReaderPage() {
       </div>
 
       <div className="px-6 py-8">
-        {fileType === "pdf" ? <PDFViewer file={file} /> : null}
-        {fileType === "docx" ? <DOCXViewer file={file} /> : null}
+        {fileType === "pdf" ? <PDFViewer file={pdfFile} /> : null}
+        {fileType === "docx" ? <DOCXViewer file={pdfFile} /> : null}
         {saveError ? (
           <p className="mx-auto mt-4 max-w-4xl rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {saveError}

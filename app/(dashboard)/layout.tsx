@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { ReaderProvider } from "@/lib/reader-context";
+import { ReaderProvider } from "@/context/ReaderContext";
 
 const navLinks = [
   { href: "/reader", label: "Reader" },
