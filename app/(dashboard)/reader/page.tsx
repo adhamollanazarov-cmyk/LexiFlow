@@ -55,6 +55,7 @@ export default function ReaderPage() {
   const [dragOver, setDragOver] = useState(false);
   const [sizeError, setSizeError] = useState("");
   const [fileType, setFileType] = useState<ReaderFileType>(null);
+  const [saveError, setSaveError] = useState("");
 
   async function getAccessToken() {
     const supabase = createClient();
@@ -67,24 +68,28 @@ export default function ReaderPage() {
 
   useEffect(() => {
     async function fetchStreak() {
-      const token = await getAccessToken();
+      try {
+        const token = await getAccessToken();
 
-      if (!token) {
-        return;
-      }
-
-      const response = await fetch(API_ROUTES.userMe, {
-        headers: {
-          Authorization: `Bearer ${token}`
+        if (!token) {
+          return;
         }
-      });
 
-      if (!response.ok) {
-        return;
+        const response = await fetch(API_ROUTES.userMe, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data = (await response.json()) as { streak_count?: number } | null;
+        setStreak(data?.streak_count || 0);
+      } catch {
+        setStreak(0);
       }
-
-      const data = (await response.json()) as { streak_count?: number };
-      setStreak(data.streak_count || 0);
     }
 
     fetchStreak();
@@ -176,54 +181,58 @@ export default function ReaderPage() {
   }, [file]);
 
   async function handleSave(word: string, translation: string) {
-    const token = await getAccessToken();
+    setSaveError("");
 
-    if (!token) {
-      return;
-    }
+    try {
+      const token = await getAccessToken();
 
-    const saveResponse = await fetch(API_ROUTES.vocabulary, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        original: word,
-        translation,
-        context_sentence: contextSentence,
-        document_name: file?.name ?? ""
-      })
-    });
+      if (!token) {
+        throw new Error("Missing auth token");
+      }
 
-    if (!saveResponse.ok) {
-      return;
-    }
+      const saveResponse = await fetch(API_ROUTES.vocabulary, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          original: word,
+          translation,
+          context_sentence: contextSentence,
+          document_name: file?.name ?? ""
+        })
+      });
 
-    setSavedCount((previous) => previous + 1);
+      if (!saveResponse.ok) {
+        throw new Error("Save request failed");
+      }
 
-    const activityResponse = await fetch(
-      API_ROUTES.userActivity,
-      {
+      setSavedCount((previous) => previous + 1);
+
+      const activityResponse = await fetch(API_ROUTES.userActivity, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`
         }
-      }
-    );
+      });
 
-    if (activityResponse.ok) {
-      const activityData = (await activityResponse.json()) as {
-        streak: number;
-        is_new_day: boolean;
-      };
+      if (activityResponse.ok) {
+        const activityData = (await activityResponse.json()) as {
+          streak?: number;
+          is_new_day?: boolean;
+        } | null;
 
-      if (activityData.is_new_day) {
-        setStreak(activityData.streak);
+        if (activityData?.is_new_day && typeof activityData.streak === "number") {
+          setStreak(activityData.streak);
+        }
       }
+
+      setShowPopup(false);
+    } catch {
+      setSaveError("Could not save this word. Please try again.");
+      throw new Error("Could not save word");
     }
-
-    setShowPopup(false);
   }
 
   function handleCloseFile() {
@@ -303,6 +312,11 @@ export default function ReaderPage() {
       <div className="px-6 py-8">
         {fileType === "pdf" ? <PDFViewer file={file} /> : null}
         {fileType === "docx" ? <DOCXViewer file={file} /> : null}
+        {saveError ? (
+          <p className="mx-auto mt-4 max-w-4xl rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {saveError}
+          </p>
+        ) : null}
       </div>
 
       {showPopup ? (

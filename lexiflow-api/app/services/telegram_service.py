@@ -45,28 +45,32 @@ def _format_word_card(word: dict[str, object]) -> str:
 
 async def send_daily_words_to_user(user_id: str, chat_id: int) -> None:
     def fetch_words() -> list[dict[str, object]]:
-        seven_days_ago = datetime.now(timezone.utc) - timedelta(days=7)
-        recent_response = (
-            supabase.table("words")
-            .select("original, translation, context_sentence, created_at")
-            .eq("user_id", user_id)
-            .gte("created_at", seven_days_ago.isoformat())
-            .order("created_at", desc=True)
-            .limit(50)
-            .execute()
-        )
-        words = list(recent_response.data or [])
-
-        if not words:
-            fallback_response = (
+        try:
+            seven_days_ago = datetime.now(timezone.utc) - timedelta(days=7)
+            recent_response = (
                 supabase.table("words")
                 .select("original, translation, context_sentence, created_at")
                 .eq("user_id", user_id)
+                .gte("created_at", seven_days_ago.isoformat())
                 .order("created_at", desc=True)
                 .limit(50)
                 .execute()
             )
-            words = list(fallback_response.data or [])
+            words = list(recent_response.data or [])
+
+            if not words:
+                fallback_response = (
+                    supabase.table("words")
+                    .select("original, translation, context_sentence, created_at")
+                    .eq("user_id", user_id)
+                    .order("created_at", desc=True)
+                    .limit(50)
+                    .execute()
+                )
+                words = list(fallback_response.data or [])
+        except Exception:
+            logger.exception("Failed to fetch Telegram words for user_id=%s", user_id)
+            return []
 
         if len(words) <= 5:
             return [dict(word) for word in words]
@@ -90,13 +94,17 @@ async def send_daily_words_to_user(user_id: str, chat_id: int) -> None:
 
 async def send_daily_words_to_all() -> None:
     def fetch_connected_users() -> list[dict[str, object]]:
-        response = (
-            supabase.table("users")
-            .select("id, telegram_chat_id")
-            .filter("telegram_chat_id", "not.is", "null")
-            .execute()
-        )
-        return [dict(user) for user in response.data or []]
+        try:
+            response = (
+                supabase.table("users")
+                .select("id, telegram_chat_id")
+                .filter("telegram_chat_id", "not.is", "null")
+                .execute()
+            )
+            return [dict(user) for user in response.data or []]
+        except Exception:
+            logger.exception("Failed to fetch Telegram-connected users")
+            return []
 
     users = await asyncio.to_thread(fetch_connected_users)
     sent_count = 0
@@ -108,8 +116,11 @@ async def send_daily_words_to_all() -> None:
         if not user_id or chat_id_value is None:
             continue
 
-        await send_daily_words_to_user(user_id, int(chat_id_value))
-        sent_count += 1
+        try:
+            await send_daily_words_to_user(user_id, int(chat_id_value))
+            sent_count += 1
+        except Exception:
+            logger.exception("Failed to send daily Telegram words to user_id=%s", user_id)
 
     logger.info("Daily Telegram words sent to %s users", sent_count)
 

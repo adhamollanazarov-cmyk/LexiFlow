@@ -6,6 +6,7 @@ export const API_ROUTES = {
   vocabulary: `${API_BASE}/api/vocabulary`,
   userMe: `${API_BASE}/api/user/me`,
   userActivity: `${API_BASE}/api/user/activity`,
+  userPreferences: `${API_BASE}/api/user/preferences`,
   telegramConnect: `${API_BASE}/api/telegram/connect`,
   telegramStatus: `${API_BASE}/api/telegram/status`,
   telegramTest: `${API_BASE}/api/telegram/test`,

@@ -24,7 +24,7 @@ app = FastAPI(title="LexiFlow API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[o.strip() for o in settings.ALLOWED_ORIGINS.split(",")],
+    allow_origins=[origin.strip() for origin in settings.ALLOWED_ORIGINS.split(",")],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -40,8 +40,4 @@ app.include_router(telegram_webhook.router)
 
 @app.get("/health")
 async def health_check() -> dict[str, str]:
-    return {
-        "status": "ok",
-        "service": "lexiflow-api",
-        "allowed_origins": settings.ALLOWED_ORIGINS,  # ← add this
-    }
+    return {"status": "ok", "service": "lexiflow-api"}

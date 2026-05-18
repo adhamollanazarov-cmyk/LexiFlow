@@ -29,49 +29,59 @@ export default function VocabularyPage() {
   async function fetchWords() {
     setIsLoading(true);
 
-    const token = await getAccessToken();
-    if (!token) {
-      setIsLoading(false);
-      return;
-    }
-
-    const response = await fetch(`${API_ROUTES.vocabulary}?limit=100&offset=0`, {
-      headers: {
-        Authorization: `Bearer ${token}`
+    try {
+      const token = await getAccessToken();
+      if (!token) {
+        setWords([]);
+        setTotalCount(0);
+        return;
       }
-    });
 
-    if (!response.ok) {
+      const response = await fetch(`${API_ROUTES.vocabulary}?limit=100&offset=0`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        setWords([]);
+        setTotalCount(0);
+        return;
+      }
+
+      const data = (await response.json()) as VocabularyResponse | null;
+      setWords(Array.isArray(data?.words) ? data.words : []);
+      setTotalCount(typeof data?.total === "number" ? data.total : 0);
+    } catch {
       setWords([]);
       setTotalCount(0);
+    } finally {
       setIsLoading(false);
-      return;
     }
-
-    const data = (await response.json()) as VocabularyResponse;
-    setWords(data.words);
-    setTotalCount(data.total);
-    setIsLoading(false);
   }
 
   async function deleteWord(wordId: string) {
-    const token = await getAccessToken();
-    if (!token) {
-      return;
-    }
-
-    const response = await fetch(`${API_ROUTES.vocabulary}/${wordId}`, {
-      method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${token}`
+    try {
+      const token = await getAccessToken();
+      if (!token) {
+        return;
       }
-    });
 
-    if (response.ok) {
-      setWords((currentWords) =>
-        currentWords.filter((word) => word.id !== wordId)
-      );
-      setTotalCount((currentTotal) => Math.max(0, currentTotal - 1));
+      const response = await fetch(`${API_ROUTES.vocabulary}/${wordId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        setWords((currentWords) =>
+          currentWords.filter((word) => word.id !== wordId)
+        );
+        setTotalCount((currentTotal) => Math.max(0, currentTotal - 1));
+      }
+    } catch {
+      return;
     }
   }
 

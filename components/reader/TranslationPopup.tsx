@@ -14,7 +14,7 @@ type TranslationPopupProps = {
   contextSentence: string;
   position: PopupPosition;
   onClose: () => void;
-  onSave: (word: string, translation: string) => void;
+  onSave: (word: string, translation: string) => Promise<void> | void;
 };
 
 type ActiveTab = "translation" | "explain";
@@ -25,6 +25,16 @@ type TranslateResponse = {
 
 type ExplainResponse = {
   explanation: string;
+};
+
+type UserPreferencesResponse = {
+  source_lang?: string;
+  target_lang?: string;
+};
+
+type LanguagePreferences = {
+  sourceLang: string;
+  targetLang: string;
 };
 
 const POPUP_WIDTH = 320;
@@ -43,10 +53,16 @@ export function TranslationPopup({
   const [translation, setTranslation] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [explanation, setExplanation] = useState<string | null>(null);
   const [isLoadingExplain, setIsLoadingExplain] = useState(false);
   const [explainError, setExplainError] = useState("");
+  const [languagePreferences, setLanguagePreferences] =
+    useState<LanguagePreferences>({
+      sourceLang: "DE",
+      targetLang: "RU"
+    });
 
   const popupPosition = useMemo(() => {
     if (typeof window === "undefined") {
@@ -73,6 +89,27 @@ export function TranslationPopup({
     return session?.access_token;
   }
 
+  async function getLanguagePreferences(
+    token: string
+  ): Promise<LanguagePreferences> {
+    const response = await fetch(API_ROUTES.userMe, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    if (!response.ok) {
+      return { sourceLang: "DE", targetLang: "RU" };
+    }
+
+    const data = (await response.json()) as UserPreferencesResponse | null;
+
+    return {
+      sourceLang: data?.source_lang || "DE",
+      targetLang: data?.target_lang || "RU"
+    };
+  }
+
   useEffect(() => {
     let isActive = true;
 
@@ -93,6 +130,8 @@ export function TranslationPopup({
           throw new Error("Missing session token");
         }
 
+        const preferences = await getLanguagePreferences(token);
+
         const response = await fetch(API_ROUTES.translate, {
           method: "POST",
           headers: {
@@ -101,8 +140,8 @@ export function TranslationPopup({
           },
           body: JSON.stringify({
             text: selectedText,
-            source_lang: "DE",
-            target_lang: "RU"
+            source_lang: preferences.sourceLang,
+            target_lang: preferences.targetLang
           })
         });
 
@@ -110,9 +149,14 @@ export function TranslationPopup({
           throw new Error("Translation request failed");
         }
 
-        const data = (await response.json()) as TranslateResponse;
+        const data = (await response.json()) as TranslateResponse | null;
+
+        if (!data?.translation) {
+          throw new Error("Translation response was empty");
+        }
 
         if (isActive) {
+          setLanguagePreferences(preferences);
           setTranslation(data.translation);
         }
       } catch {
@@ -191,7 +235,7 @@ export function TranslationPopup({
         body: JSON.stringify({
           word: selectedText,
           sentence: contextSentence,
-          target_lang: "RU"
+          target_lang: languagePreferences.targetLang
         })
       });
 
@@ -199,7 +243,12 @@ export function TranslationPopup({
         throw new Error("Explanation request failed");
       }
 
-      const data = (await response.json()) as ExplainResponse;
+      const data = (await response.json()) as ExplainResponse | null;
+
+      if (!data?.explanation) {
+        throw new Error("Explanation response was empty");
+      }
+
       setExplanation(data.explanation);
     } catch {
       setExplainError("AI explanation unavailable");
@@ -216,19 +265,27 @@ export function TranslationPopup({
     }
   }
 
-  function handleSave() {
+  async function handleSave() {
     if (!translation) {
       return;
     }
 
-    onSave(selectedText, translation);
-    setIsSaved(true);
+    setIsSaving(true);
+
+    try {
+      await onSave(selectedText, translation);
+      setIsSaved(true);
+    } catch {
+      setErrorMessage("Could not save word");
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   return (
     <div
       ref={popupRef}
-      className="fixed z-50 w-[320px] rounded-md bg-white p-4 shadow-xl ring-1 ring-slate-200"
+      className="fixed z-50 w-[min(320px,calc(100vw-32px))] rounded-md bg-white p-4 shadow-xl ring-1 ring-slate-200"
     >
       <button
         type="button"
@@ -311,10 +368,10 @@ export function TranslationPopup({
       <button
         type="button"
         onClick={handleSave}
-        disabled={!translation || isSaved}
+        disabled={!translation || isSaved || isSaving}
         className="mt-4 w-full rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {isSaved ? "Saved" : "Save"}
+        {isSaving ? "Saving..." : isSaved ? "Saved" : "Save"}
       </button>
     </div>
   );

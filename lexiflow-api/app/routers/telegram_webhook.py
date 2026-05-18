@@ -1,8 +1,11 @@
-from fastapi import APIRouter, HTTPException, Query, Request
+from json import JSONDecodeError
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from telegram import Bot
 from telegram.error import TelegramError
 
 from app.core.config import settings
+from app.middleware.auth import get_current_user
 from app.services.telegram_service import send_message
 
 router = APIRouter()
@@ -31,7 +34,14 @@ async def telegram_webhook(request: Request) -> dict[str, bool]:
     if secret_token != settings.TELEGRAM_BOT_TOKEN:
         return {"ok": True}
 
-    update: dict[str, object] = await request.json()
+    try:
+        update = await request.json()
+    except JSONDecodeError:
+        return {"ok": True}
+
+    if not isinstance(update, dict):
+        return {"ok": True}
+
     message = _get_message(update)
 
     if not message:
@@ -44,7 +54,7 @@ async def telegram_webhook(request: Request) -> dict[str, bool]:
         await send_message(
             chat_id,
             (
-                "👋 Welcome to LexiFlow Bot!\n\n"
+                "Welcome to LexiFlow Bot!\n\n"
                 f"Your Chat ID is: <b>{chat_id}</b>\n\n"
                 "Copy this ID and paste it in LexiFlow Settings "
                 "to connect your account."
@@ -57,9 +67,13 @@ async def telegram_webhook(request: Request) -> dict[str, bool]:
 @router.get("/api/telegram/setup-webhook")
 async def setup_telegram_webhook(
     url: str = Query(..., alias="url"),
+    user_id: str = Depends(get_current_user),
 ) -> dict[str, bool | str]:
     if not settings.TELEGRAM_BOT_TOKEN:
-        raise HTTPException(status_code=503, detail="Telegram bot token is not configured")
+        raise HTTPException(
+            status_code=503,
+            detail="Telegram bot token is not configured",
+        )
 
     webhook_url = f"{url.rstrip('/')}/api/telegram/webhook"
 
@@ -70,6 +84,9 @@ async def setup_telegram_webhook(
                 secret_token=settings.TELEGRAM_BOT_TOKEN,
             )
     except TelegramError as exc:
-        raise HTTPException(status_code=502, detail="Telegram webhook setup failed") from exc
+        raise HTTPException(
+            status_code=502,
+            detail="Telegram webhook setup failed",
+        ) from exc
 
     return {"ok": bool(result), "webhook_url": webhook_url}

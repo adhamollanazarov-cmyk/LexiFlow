@@ -15,13 +15,19 @@ class TelegramConnectRequest(BaseModel):
 
 
 def _get_user_telegram_chat_id(user_id: str) -> int | None:
-    response = (
-        supabase.table("users")
-        .select("telegram_chat_id")
-        .eq("id", user_id)
-        .limit(1)
-        .execute()
-    )
+    try:
+        response = (
+            supabase.table("users")
+            .select("telegram_chat_id")
+            .eq("id", user_id)
+            .limit(1)
+            .execute()
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail="Could not load Telegram status",
+        ) from exc
 
     if not response.data:
         return None
@@ -35,19 +41,39 @@ async def connect_telegram(
     request: TelegramConnectRequest,
     user_id: str = Depends(get_current_user),
 ) -> dict[str, int | str]:
-    await get_user_stats(user_id)
+    try:
+        await get_user_stats(user_id)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail="Could not load user") from exc
 
     def update_chat_id() -> None:
-        supabase.table("users").update(
-            {"telegram_chat_id": request.chat_id}
-        ).eq("id", user_id).execute()
+        try:
+            response = (
+                supabase.table("users")
+                .update({"telegram_chat_id": request.chat_id})
+                .eq("id", user_id)
+                .execute()
+            )
+        except Exception as exc:
+            raise HTTPException(
+                status_code=500,
+                detail="Could not connect Telegram",
+            ) from exc
+
+        if not response.data:
+            raise HTTPException(status_code=500, detail="Could not connect Telegram")
 
     await asyncio.to_thread(update_chat_id)
 
-    await send_message(
+    message_sent = await send_message(
         request.chat_id,
-        "✅ Connected! You'll receive 5 words every morning at 9:00 UTC.",
+        "Connected! You'll receive 5 words every morning at 9:00 UTC.",
     )
+
+    if not message_sent:
+        raise HTTPException(status_code=500, detail="Could not send Telegram message")
 
     return {"message": "connected", "chat_id": request.chat_id}
 
@@ -61,7 +87,16 @@ async def send_test_words(
     if chat_id is None:
         raise HTTPException(status_code=400, detail="Telegram not connected")
 
-    await send_daily_words_to_user(user_id, chat_id)
+    try:
+        await send_daily_words_to_user(user_id, chat_id)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail="Could not send Telegram words",
+        ) from exc
+
     return {"message": "sent"}
 
 

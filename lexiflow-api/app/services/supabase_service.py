@@ -30,6 +30,8 @@ def _create_user_row(user_id: str) -> dict[str, Any]:
                 "email": "",
                 "streak_count": 0,
                 "last_active_date": None,
+                "source_lang": "DE",
+                "target_lang": "RU",
             }
         )
         .execute()
@@ -41,6 +43,8 @@ def _create_user_row(user_id: str) -> dict[str, Any]:
             "email": "",
             "streak_count": 0,
             "last_active_date": None,
+            "source_lang": "DE",
+            "target_lang": "RU",
         }
 
     return dict(response.data[0])
@@ -124,7 +128,7 @@ async def get_user_stats(user_id: str) -> dict[str, Any]:
     def select_user_stats() -> dict[str, Any]:
         user_response = (
             supabase.table("users")
-            .select("id, email, streak_count, last_active_date")
+            .select("id, email, streak_count, last_active_date, source_lang, target_lang")
             .eq("id", user_id)
             .limit(1)
             .execute()
@@ -147,6 +151,8 @@ async def get_user_stats(user_id: str) -> dict[str, Any]:
             "words_total": int(count_response.count or 0),
             "email": str(user.get("email") or ""),
             "last_active_date": user.get("last_active_date"),
+            "source_lang": str(user.get("source_lang") or "DE"),
+            "target_lang": str(user.get("target_lang") or "RU"),
         }
 
     return await asyncio.to_thread(select_user_stats)
@@ -196,3 +202,41 @@ async def update_streak(user_id: str) -> dict[str, int | bool]:
         return {"streak": new_streak, "is_new_day": is_new_day}
 
     return await asyncio.to_thread(update_user_streak)
+
+
+async def update_user_language_preferences(
+    user_id: str,
+    source_lang: str,
+    target_lang: str,
+) -> dict[str, str]:
+    def update_preferences() -> dict[str, str]:
+        user_response = (
+            supabase.table("users")
+            .select("id")
+            .eq("id", user_id)
+            .limit(1)
+            .execute()
+        )
+
+        if not user_response.data:
+            _create_user_row(user_id)
+
+        response = (
+            supabase.table("users")
+            .update({"source_lang": source_lang, "target_lang": target_lang})
+            .eq("id", user_id)
+            .execute()
+        )
+
+        if not response.data:
+            raise HTTPException(
+                status_code=500,
+                detail="Could not update language preferences",
+            )
+
+        return {
+            "source_lang": str(response.data[0].get("source_lang") or source_lang),
+            "target_lang": str(response.data[0].get("target_lang") or target_lang),
+        }
+
+    return await asyncio.to_thread(update_preferences)

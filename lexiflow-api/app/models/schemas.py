@@ -51,3 +51,10 @@ class UserResponse(BaseModel):
     streak_count: int
     words_total: int
     last_active_date: str | None = None
+    source_lang: str = "DE"
+    target_lang: str = "RU"
+
+
+class UserLanguagePreferencesUpdate(BaseModel):
+    source_lang: str
+    target_lang: str

@@ -7,6 +7,12 @@ DEEPL_TRANSLATE_URL = "https://api-free.deepl.com/v2/translate"
 
 
 async def translate_text(text: str, source_lang: str, target_lang: str) -> str:
+    if not settings.DEEPL_API_KEY:
+        raise HTTPException(
+            status_code=500,
+            detail="DEEPL_API_KEY is not configured",
+        )
+
     try:
         async with httpx.AsyncClient(timeout=10) as client:
             response = await client.post(
@@ -22,9 +28,19 @@ async def translate_text(text: str, source_lang: str, target_lang: str) -> str:
             )
             response.raise_for_status()
             data = response.json()
-            return str(data["translations"][0]["text"])
+            translation = data.get("translations", [{}])[0].get("text")
+
+            if not translation:
+                raise HTTPException(
+                    status_code=500,
+                    detail="Translation service returned an empty result",
+                )
+
+            return str(translation)
+    except HTTPException:
+        raise
     except (httpx.HTTPError, KeyError, IndexError, TypeError):
         raise HTTPException(
-            status_code=502,
+            status_code=500,
             detail="Translation service unavailable",
         )

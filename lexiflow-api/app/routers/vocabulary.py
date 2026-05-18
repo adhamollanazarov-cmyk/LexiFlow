@@ -12,7 +12,12 @@ async def create_vocabulary_word(
     word: WordCreate,
     user_id: str = Depends(get_current_user),
 ) -> dict[str, str]:
-    inserted_word = await save_word(user_id, word)
+    try:
+        inserted_word = await save_word(user_id, word)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail="Could not save word") from exc
 
     return {"id": str(inserted_word["id"]), "message": "saved"}
 
@@ -23,7 +28,12 @@ async def list_vocabulary_words(
     offset: int = Query(0, ge=0),
     user_id: str = Depends(get_current_user),
 ) -> VocabularyListResponse:
-    words, total = await get_words(user_id, limit, offset)
+    try:
+        words, total = await get_words(user_id, limit, offset)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail="Could not load vocabulary") from exc
 
     return VocabularyListResponse(
         words=[WordResponse(**word) for word in words],
@@ -36,7 +46,12 @@ async def remove_vocabulary_word(
     word_id: str,
     user_id: str = Depends(get_current_user),
 ) -> dict[str, str]:
-    deleted = await delete_word(word_id, user_id)
+    try:
+        deleted = await delete_word(word_id, user_id)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail="Could not delete word") from exc
 
     if not deleted:
         raise HTTPException(status_code=403, detail="Not authorized")
