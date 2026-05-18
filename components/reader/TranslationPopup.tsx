@@ -235,7 +235,8 @@ export function TranslationPopup({
         body: JSON.stringify({
           word: selectedText,
           sentence: contextSentence,
-          target_lang: languagePreferences.targetLang
+          target_lang: languagePreferences.targetLang,
+          ui_language: "English"
         })
       });
 

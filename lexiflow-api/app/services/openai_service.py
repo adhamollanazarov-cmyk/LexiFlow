@@ -4,7 +4,7 @@ from openai import AsyncOpenAI, OpenAIError
 from app.core.config import settings
 
 
-async def get_explanation(word: str, sentence: str, target_lang: str) -> str:
+async def get_explanation(word: str, sentence: str, ui_language: str) -> str:
     if not settings.OPENAI_API_KEY:
         raise HTTPException(
             status_code=503,
@@ -15,13 +15,9 @@ async def get_explanation(word: str, sentence: str, target_lang: str) -> str:
     context_sentence = sentence[:300]
 
     system_prompt = (
-        "You are a professional language tutor.\n"
-        "When given a word and its context sentence, explain the word's meaning "
-        f"in {target_lang} in 2-3 sentences maximum.\n"
-        "Focus on: (1) what the word means in THIS specific context,\n"
-        "(2) one alternative meaning if relevant.\n"
-        "Be concise. Do NOT translate the whole sentence.\n"
-        "Do NOT explain grammar rules."
+        "You are a language learning assistant. Explain the meaning of the "
+        "given word or phrase in context. "
+        f"Always respond in {ui_language}. Be concise, max 3 sentences."
     )
 
     try:

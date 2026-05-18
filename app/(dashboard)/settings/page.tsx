@@ -139,8 +139,12 @@ export default function SettingsPage() {
   }
 
   async function handleSaveLanguages() {
-    const token = await getAuthToken();
-    if (!token) {
+    const supabase = createClient();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session?.access_token) {
       setMessage("Please sign in again before saving languages.");
       return;
     }
@@ -152,8 +156,8 @@ export default function SettingsPage() {
       const res = await fetch(API_ROUTES.userPreferences, {
         method: "PATCH",
         headers: {
-          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           source_lang: sourceLang,
@@ -162,6 +166,7 @@ export default function SettingsPage() {
       });
 
       if (!res.ok) {
+        console.error("Settings save error:", res.status, await res.text());
         throw new Error("Could not save language preferences");
       }
 

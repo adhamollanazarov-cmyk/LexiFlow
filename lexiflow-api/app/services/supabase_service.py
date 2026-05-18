@@ -210,28 +210,41 @@ async def update_user_language_preferences(
     target_lang: str,
 ) -> dict[str, str]:
     def update_preferences() -> dict[str, str]:
-        user_response = (
-            supabase.table("users")
-            .select("id")
-            .eq("id", user_id)
-            .limit(1)
-            .execute()
-        )
+        try:
+            user_response = (
+                supabase.table("users")
+                .select("id")
+                .eq("id", user_id)
+                .limit(1)
+                .execute()
+            )
 
-        if not user_response.data:
-            _create_user_row(user_id)
+            if not user_response.data:
+                _create_user_row(user_id)
 
-        response = (
-            supabase.table("users")
-            .update({"source_lang": source_lang, "target_lang": target_lang})
-            .eq("id", user_id)
-            .execute()
-        )
+            response = (
+                supabase.table("users")
+                .update(
+                    {
+                        "source_lang": source_lang,
+                        "target_lang": target_lang,
+                    }
+                )
+                .eq("id", user_id)
+                .execute()
+            )
+        except HTTPException:
+            raise
+        except Exception as exc:
+            raise HTTPException(
+                status_code=500,
+                detail="Supabase failed to update language preferences",
+            ) from exc
 
         if not response.data:
             raise HTTPException(
                 status_code=500,
-                detail="Could not update language preferences",
+                detail="Supabase returned no updated language preferences",
             )
 
         return {

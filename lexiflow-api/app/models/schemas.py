@@ -16,6 +16,7 @@ class ExplainRequest(BaseModel):
     word: str
     sentence: str
     target_lang: str = "RU"
+    ui_language: str = "English"
 
 
 class ExplainResponse(BaseModel):
