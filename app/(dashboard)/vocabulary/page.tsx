@@ -101,7 +101,7 @@ export default function VocabularyPage() {
 
   if (isLoading) {
     return (
-      <section className="flex min-h-[calc(100vh-9rem)] items-center justify-center bg-slate-50">
+      <section className="flex min-h-[calc(100vh-9rem)] items-center justify-center overflow-x-hidden bg-slate-50 px-4">
         <p className="text-sm font-medium text-slate-500">
           Loading your vocabulary...
         </p>
@@ -111,14 +111,14 @@ export default function VocabularyPage() {
 
   if (words.length === 0) {
     return (
-      <section className="flex min-h-[calc(100vh-9rem)] items-center justify-center bg-slate-50">
+      <section className="flex min-h-[calc(100vh-9rem)] items-center justify-center overflow-x-hidden bg-slate-50 px-4">
         <div className="text-center">
           <h1 className="text-3xl font-bold tracking-normal text-slate-950">
             No words saved yet
           </h1>
           <Link
             href="/reader"
-            className="mt-4 inline-flex rounded-lg bg-[#4F6EF7] px-5 py-3 text-sm font-semibold text-white shadow-sm shadow-blue-200 transition hover:bg-indigo-600"
+            className="mt-4 inline-flex min-h-11 items-center justify-center rounded-lg bg-[#4F6EF7] px-5 py-3 text-sm font-semibold text-white shadow-sm shadow-blue-200 transition hover:bg-indigo-600"
           >
             Go to Reader to start saving words
           </Link>
@@ -128,7 +128,7 @@ export default function VocabularyPage() {
   }
 
   return (
-    <section className="mx-auto max-w-6xl bg-slate-50">
+    <section className="mx-auto max-w-6xl overflow-x-hidden bg-slate-50">
       <div className="mb-6 flex flex-col gap-5">
         <div className="flex items-end justify-between gap-4">
           <h1 className="text-3xl font-bold tracking-normal text-slate-950">
@@ -162,13 +162,13 @@ export default function VocabularyPage() {
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
               placeholder="Search saved words..."
-              className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-11 pr-4 text-sm text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-[#4F6EF7] focus:ring-2 focus:ring-blue-100"
+              className="min-h-12 w-full rounded-xl border border-slate-200 bg-white py-3 pl-11 pr-4 text-sm text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-[#4F6EF7] focus:ring-2 focus:ring-blue-100"
             />
           </label>
 
           <button
             type="button"
-            className="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
+            className="min-h-12 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
           >
             ⚯ Filter
           </button>
@@ -205,7 +205,7 @@ export default function VocabularyPage() {
         </div>
         <Link
           href="/reader"
-          className="inline-flex justify-center rounded-lg bg-[#4F6EF7] px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-200 transition hover:bg-indigo-600"
+          className="inline-flex min-h-11 items-center justify-center rounded-lg bg-[#4F6EF7] px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-200 transition hover:bg-indigo-600"
         >
           Review words
         </Link>

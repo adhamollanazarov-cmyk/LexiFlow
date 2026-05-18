@@ -47,7 +47,7 @@ export function DOCXViewer({ file }: DOCXViewerProps) {
 
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-4xl rounded-md bg-white p-8 text-center text-sm text-slate-500 shadow-sm ring-1 ring-slate-200">
+      <div className="mx-auto max-w-4xl rounded-md bg-white p-4 text-center text-sm text-slate-500 shadow-sm ring-1 ring-slate-200 sm:p-8">
         Loading document...
       </div>
     );
@@ -62,9 +62,9 @@ export function DOCXViewer({ file }: DOCXViewerProps) {
   }
 
   return (
-    <article className="mx-auto max-w-4xl rounded-md bg-white p-8 shadow-sm ring-1 ring-slate-200">
+    <article className="mx-auto max-w-4xl overflow-x-hidden rounded-md bg-white p-4 text-sm shadow-sm ring-1 ring-slate-200 sm:p-8 sm:text-base">
       <div
-        className="prose prose-slate max-w-none"
+        className="prose prose-slate max-w-none text-sm sm:text-base"
         dangerouslySetInnerHTML={{ __html: htmlContent }}
       />
     </article>

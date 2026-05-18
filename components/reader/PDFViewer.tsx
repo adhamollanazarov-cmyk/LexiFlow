@@ -55,8 +55,11 @@ export function PDFViewer({ file }: PDFViewerProps) {
     );
   }
 
+  const pageWidth =
+    typeof window === "undefined" ? 750 : Math.min(750, window.innerWidth - 32);
+
   return (
-    <div className="flex justify-center">
+    <div className="flex max-w-full justify-center overflow-x-hidden">
       <Document
         file={fileUrl}
         loading={
@@ -72,15 +75,15 @@ export function PDFViewer({ file }: PDFViewerProps) {
         onLoadSuccess={handleLoadSuccess}
         onLoadError={handleLoadError}
       >
-        <div className="flex flex-col items-center gap-6">
+        <div className="flex max-w-full flex-col items-center gap-6">
           {Array.from({ length: numPages }, (_, index) => (
             <div
               key={`page-${index + 1}`}
-              className="overflow-hidden rounded-md bg-white shadow-sm ring-1 ring-slate-200"
+              className="max-w-full overflow-hidden rounded-md bg-white shadow-sm ring-1 ring-slate-200"
             >
               <Page
                 pageNumber={index + 1}
-                width={750}
+                width={pageWidth}
                 renderTextLayer={true}
                 renderAnnotationLayer={false}
               />

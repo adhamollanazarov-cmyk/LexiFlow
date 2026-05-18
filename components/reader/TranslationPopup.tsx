@@ -83,7 +83,7 @@ function FormattedExplanation({ text }: { text: string }) {
     <div className="space-y-3">
       <p className="text-sm leading-6 text-slate-700">{explanationText}</p>
       <div className="rounded-md bg-slate-50 p-3 ring-1 ring-slate-200">
-        <p className="text-xs font-semibold uppercase tracking-normal text-slate-500">
+        <p className="text-sm font-semibold uppercase tracking-normal text-slate-500">
           Examples
         </p>
         <ol className="mt-2 list-decimal space-y-2 pl-4 text-sm leading-6 text-slate-700">
@@ -238,6 +238,12 @@ export function TranslationPopup({
       return;
     }
 
+    if (window.innerWidth < 768) {
+      popupRef.current.style.left = "";
+      popupRef.current.style.top = "";
+      return;
+    }
+
     popupRef.current.style.left = `${popupPosition.x}px`;
     popupRef.current.style.top = `${popupPosition.y}px`;
   }, [popupPosition]);
@@ -347,12 +353,13 @@ export function TranslationPopup({
   return (
     <div
       ref={popupRef}
-      className="fixed z-50 w-[min(320px,calc(100vw-32px))] rounded-md bg-white p-4 shadow-xl ring-1 ring-slate-200"
+      className="fixed inset-x-0 bottom-0 z-50 max-h-[60vh] overflow-y-auto rounded-t-2xl bg-white p-4 shadow-2xl ring-1 ring-slate-200 md:inset-x-auto md:bottom-auto md:w-[min(320px,calc(100vw-32px))] md:rounded-md md:shadow-xl"
     >
+      <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-slate-200 md:hidden" />
       <button
         type="button"
         onClick={onClose}
-        className="absolute right-3 top-3 text-sm font-semibold text-slate-400 transition hover:text-slate-700"
+        className="absolute right-4 top-4 flex min-h-11 min-w-11 items-center justify-center text-sm font-semibold text-slate-400 transition hover:text-slate-700 md:right-3 md:top-3 md:min-h-0 md:min-w-0"
         aria-label="Close translation popup"
       >
         x
@@ -366,7 +373,7 @@ export function TranslationPopup({
         <button
           type="button"
           onClick={() => handleTabChange("translation")}
-          className={`rounded-md px-3 py-2 text-sm font-semibold transition ${
+          className={`min-h-11 rounded-md px-3 py-2 text-sm font-semibold transition ${
             activeTab === "translation"
               ? "bg-slate-950 text-white"
               : "bg-slate-100 text-slate-600 hover:bg-slate-200"
@@ -377,7 +384,7 @@ export function TranslationPopup({
         <button
           type="button"
           onClick={() => handleTabChange("explain")}
-          className={`rounded-md px-3 py-2 text-sm font-semibold transition ${
+          className={`min-h-11 rounded-md px-3 py-2 text-sm font-semibold transition ${
             activeTab === "explain"
               ? "bg-slate-950 text-white"
               : "bg-slate-100 text-slate-600 hover:bg-slate-200"
@@ -431,7 +438,7 @@ export function TranslationPopup({
         type="button"
         onClick={handleSave}
         disabled={!translation || isSaved || isSaving}
-        className="mt-4 w-full rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+        className="mt-4 min-h-12 w-full rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {isSaving ? "Saving..." : isSaved ? "Saved" : "Save"}
       </button>

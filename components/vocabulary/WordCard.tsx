@@ -34,7 +34,7 @@ export function WordCard({ word, onDelete }: WordCardProps) {
   const formattedDate = formatWordDate(word.created_at);
 
   return (
-    <article className="group relative rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition hover:border-slate-200 hover:shadow-md">
+    <article className="group relative rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition hover:border-slate-200 hover:shadow-md sm:p-5">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <div className="flex min-w-0 items-center gap-2">
@@ -44,7 +44,7 @@ export function WordCard({ word, onDelete }: WordCardProps) {
             <button
               type="button"
               aria-label={`Listen to ${word.original}`}
-              className="shrink-0 rounded-full p-1 text-slate-400 transition hover:bg-slate-50 hover:text-slate-600"
+              className="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-50 hover:text-slate-600"
             >
               🔊
             </button>
@@ -52,14 +52,14 @@ export function WordCard({ word, onDelete }: WordCardProps) {
           <p className="mt-1 text-base font-semibold text-[#4F6EF7]">
             {word.translation}
           </p>
-          <p className="mt-1 text-xs font-medium text-slate-400">word</p>
+          <p className="mt-1 text-sm font-medium text-slate-400">word</p>
         </div>
 
         <div className="flex shrink-0 items-center gap-1 text-slate-400">
           <button
             type="button"
             aria-label={`Bookmark ${word.original}`}
-            className="rounded-md p-2 transition hover:bg-indigo-50 hover:text-[#4F6EF7]"
+            className="flex min-h-11 min-w-11 items-center justify-center rounded-md transition hover:bg-indigo-50 hover:text-[#4F6EF7]"
           >
             <svg
               viewBox="0 0 24 24"
@@ -78,7 +78,7 @@ export function WordCard({ word, onDelete }: WordCardProps) {
             type="button"
             onClick={() => setIsConfirmingDelete((current) => !current)}
             aria-label={`Open menu for ${word.original}`}
-            className="rounded-md px-2 py-1 text-lg leading-none transition hover:bg-slate-50 hover:text-slate-600"
+            className="flex min-h-11 min-w-11 items-center justify-center rounded-md text-lg leading-none transition hover:bg-slate-50 hover:text-slate-600"
           >
             ⋮
           </button>
@@ -87,18 +87,18 @@ export function WordCard({ word, onDelete }: WordCardProps) {
 
       {isConfirmingDelete ? (
         <div className="mt-4 flex items-center gap-2 rounded-xl border border-red-100 bg-red-50 px-3 py-2">
-          <span className="text-xs font-semibold text-red-700">Delete?</span>
+          <span className="text-sm font-semibold text-red-700">Delete?</span>
           <button
             type="button"
             onClick={() => onDelete(word.id)}
-            className="rounded-md bg-red-600 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-red-700"
+            className="min-h-11 rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-red-700"
           >
             Yes
           </button>
           <button
             type="button"
             onClick={() => setIsConfirmingDelete(false)}
-            className="rounded-md bg-white px-2.5 py-1 text-xs font-semibold text-slate-600 ring-1 ring-slate-200 transition hover:bg-slate-50"
+            className="min-h-11 rounded-md bg-white px-3 py-2 text-sm font-semibold text-slate-600 ring-1 ring-slate-200 transition hover:bg-slate-50"
           >
             No
           </button>
@@ -113,7 +113,7 @@ export function WordCard({ word, onDelete }: WordCardProps) {
 
       <div className="mt-5 flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
         {word.document_name ? (
-          <span className="min-w-0 truncate text-xs font-medium text-slate-400">
+          <span className="min-w-0 truncate text-sm font-medium text-slate-400">
             {word.document_name}
           </span>
         ) : (
@@ -123,7 +123,7 @@ export function WordCard({ word, onDelete }: WordCardProps) {
         {formattedDate ? (
           <time
             dateTime={word.created_at}
-            className="shrink-0 text-xs font-medium text-slate-400"
+            className="shrink-0 text-sm font-medium text-slate-400"
           >
             {formattedDate}
           </time>

@@ -404,7 +404,7 @@ export default function ReaderPage() {
 
   if (!pdfFile) {
     return (
-      <main className="min-h-[calc(100vh-8rem)] bg-slate-50 px-4 py-8 sm:px-6">
+      <main className="min-h-[calc(100vh-8rem)] overflow-x-hidden bg-slate-50 px-4 py-6 sm:px-6 md:py-8">
         <section className="mx-auto flex max-w-3xl flex-col items-center text-center">
           <h1 className="text-3xl font-bold tracking-normal text-slate-950 sm:text-4xl">
             Let&apos;s get started ✨
@@ -417,7 +417,7 @@ export default function ReaderPage() {
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
-            className={`mt-8 flex w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed bg-white/80 px-6 py-10 shadow-sm transition sm:px-10 sm:py-12 ${
+            className={`mt-8 flex w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed bg-white/80 px-4 py-8 shadow-sm transition sm:px-10 sm:py-12 ${
               dragOver ? "border-[#4F6EF7] bg-blue-50/60" : "border-slate-300"
             }`}
           >
@@ -464,7 +464,7 @@ export default function ReaderPage() {
             </h2>
             <p className="mt-3 text-sm text-slate-500">or</p>
 
-            <label className="mt-5 flex w-full max-w-xs cursor-pointer items-center justify-center rounded-lg bg-[#4F6EF7] px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-200 transition hover:bg-indigo-600">
+            <label className="mt-5 flex min-h-12 w-full max-w-xs cursor-pointer items-center justify-center rounded-lg bg-[#4F6EF7] px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-200 transition hover:bg-indigo-600">
               📁 Choose file
               <input
                 type="file"
@@ -474,13 +474,13 @@ export default function ReaderPage() {
               />
             </label>
 
-            <p className="mt-4 text-xs font-semibold text-emerald-600">
+            <p className="mt-4 text-sm font-semibold text-emerald-600">
               ✅ Supports PDF and DOCX files
             </p>
           </div>
 
-          <div className="mt-6 flex w-full flex-col gap-4 rounded-xl border border-blue-100 bg-blue-50 px-5 py-4 text-left shadow-sm sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-start gap-3">
+          <div className="mt-6 flex w-full flex-col items-start gap-4 rounded-xl border border-blue-100 bg-blue-50 px-5 py-4 text-left shadow-sm sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-[#4F6EF7] ring-1 ring-blue-100">
                 <ShieldIcon />
               </div>
@@ -488,7 +488,7 @@ export default function ReaderPage() {
                 <p className="text-sm font-bold text-slate-950">
                   Your files never leave your device
                 </p>
-                <p className="mt-1 text-xs leading-5 text-slate-500">
+                <p className="mt-1 text-sm leading-5 text-slate-500">
                   All processing happens locally in your browser.
                 </p>
               </div>
@@ -517,7 +517,7 @@ export default function ReaderPage() {
                 <p className="mt-4 text-sm font-bold text-slate-950">
                   1 Upload
                 </p>
-                <p className="mt-2 text-xs leading-5 text-slate-500">
+                <p className="mt-2 text-sm leading-5 text-slate-500">
                   Add your PDF or DOCX file
                 </p>
               </div>
@@ -531,7 +531,7 @@ export default function ReaderPage() {
                   <BookOpenIcon />
                 </div>
                 <p className="mt-4 text-sm font-bold text-slate-950">2 Read</p>
-                <p className="mt-2 text-xs leading-5 text-slate-500">
+                <p className="mt-2 text-sm leading-5 text-slate-500">
                   Read comfortably with focus
                 </p>
               </div>
@@ -547,7 +547,7 @@ export default function ReaderPage() {
                 <p className="mt-4 text-sm font-bold text-slate-950">
                   3 Save Words
                 </p>
-                <p className="mt-2 text-xs leading-5 text-slate-500">
+                <p className="mt-2 text-sm leading-5 text-slate-500">
                   Save new words and build your vocabulary
                 </p>
               </div>
@@ -561,22 +561,26 @@ export default function ReaderPage() {
   return (
     <main className="min-h-screen bg-slate-50">
       <div className="sticky top-0 z-40 border-b border-slate-200 bg-white shadow-sm">
-        <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <div className="mx-auto flex max-w-6xl flex-col gap-3 px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-4">
           <p className="min-w-0 max-w-full truncate text-sm font-bold text-slate-950 sm:max-w-md">
-            {truncateFilename(pdfName ?? "Untitled document")}
+            {truncateFilename(
+              (pdfName ?? "Untitled document").length > 15
+                ? `${(pdfName ?? "Untitled document").slice(0, 15)}...`
+                : pdfName ?? "Untitled document"
+            )}
           </p>
 
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-            <span className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700">
+            <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1.5 text-sm font-medium text-slate-700 sm:px-3">
               💾 {savedCount} saved
             </span>
-            <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-sm font-medium text-amber-700">
+            <span className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-sm font-medium text-amber-700 sm:px-3">
               🔥 {streak} day streak
             </span>
             <button
               type="button"
               onClick={handleCloseFile}
-              className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+              className="min-h-11 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
             >
               ✕ Close
             </button>
@@ -584,7 +588,7 @@ export default function ReaderPage() {
         </div>
       </div>
 
-      <div ref={documentContentRef} className="px-6 py-8">
+      <div ref={documentContentRef} className="max-w-full overflow-x-hidden px-2 py-6 sm:px-6 sm:py-8">
         {fileType === "pdf" ? <PDFViewer file={pdfFile} /> : null}
         {fileType === "docx" ? <DOCXViewer file={pdfFile} /> : null}
         {saveError ? (

@@ -51,7 +51,7 @@ const avatars = [
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen bg-white text-slate-950">
+    <main className="min-h-screen overflow-x-hidden bg-white text-slate-950">
       <header className="border-b border-slate-200 bg-white/95">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4 sm:px-8">
           <Link href="/" className="flex items-center gap-3">
@@ -65,7 +65,7 @@ export default function HomePage() {
 
           <Link
             href="/login"
-            className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
+            className="flex min-h-11 items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
           >
             Sign in
           </Link>
@@ -78,7 +78,7 @@ export default function HomePage() {
             🔒 Your files never leave your device
           </div>
 
-          <h1 className="mx-auto mt-7 max-w-3xl text-4xl font-bold leading-tight tracking-normal text-slate-950 sm:text-5xl lg:text-6xl">
+          <h1 className="mx-auto mt-7 max-w-3xl text-3xl font-bold leading-tight tracking-normal text-slate-950 sm:text-5xl lg:text-6xl">
             Read any document.
             <br />
             Understand{" "}
@@ -90,10 +90,10 @@ export default function HomePage() {
             understand what you read.
           </p>
 
-          <div className="mt-9">
+          <div className="mt-9 flex justify-center">
             <Link
               href="/login"
-              className="inline-flex items-center justify-center rounded-xl bg-slate-950 px-7 py-4 text-base font-semibold text-white shadow-xl shadow-slate-300 transition hover:bg-slate-800"
+              className="inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-slate-950 px-7 py-4 text-base font-semibold text-white shadow-xl shadow-slate-300 transition hover:bg-slate-800 sm:w-auto"
             >
               Get Started →
             </Link>
@@ -155,7 +155,7 @@ export default function HomePage() {
             ))}
           </div>
 
-          <div className="mx-auto mt-10 flex max-w-3xl flex-col items-center justify-center gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-5 shadow-sm sm:flex-row sm:gap-6">
+          <div className="mx-auto mt-10 flex max-w-3xl flex-col flex-wrap items-center justify-center gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-5 text-center shadow-sm sm:flex-row sm:gap-6">
             <p className="text-sm font-medium text-slate-500">
               Trusted by readers worldwide
             </p>
@@ -163,7 +163,7 @@ export default function HomePage() {
               {avatars.map((avatar) => (
                 <span
                   key={avatar.initials}
-                  className={`flex h-9 w-9 items-center justify-center rounded-full border-2 border-white text-xs font-bold ${avatar.className}`}
+                  className={`flex h-9 w-9 items-center justify-center rounded-full border-2 border-white text-sm font-bold ${avatar.className}`}
                 >
                   {avatar.initials}
                 </span>
@@ -179,7 +179,7 @@ export default function HomePage() {
       </section>
 
       <section className="border-t border-slate-200 bg-slate-50">
-        <div className="mx-auto grid max-w-6xl gap-4 px-5 py-10 sm:grid-cols-2 sm:px-8 lg:grid-cols-4">
+        <div className="mx-auto grid max-w-6xl grid-cols-2 gap-4 px-4 py-10 sm:px-8 lg:grid-cols-4">
           {footerFeatures.map((feature) => (
             <div key={feature.title} className="rounded-2xl bg-white p-5 shadow-sm">
               <div className="text-2xl">{feature.icon}</div>
