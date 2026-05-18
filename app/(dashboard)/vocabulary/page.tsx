@@ -101,7 +101,7 @@ export default function VocabularyPage() {
 
   if (isLoading) {
     return (
-      <section className="flex min-h-[calc(100vh-9rem)] items-center justify-center">
+      <section className="flex min-h-[calc(100vh-9rem)] items-center justify-center bg-slate-50">
         <p className="text-sm font-medium text-slate-500">
           Loading your vocabulary...
         </p>
@@ -111,14 +111,14 @@ export default function VocabularyPage() {
 
   if (words.length === 0) {
     return (
-      <section className="flex min-h-[calc(100vh-9rem)] items-center justify-center">
+      <section className="flex min-h-[calc(100vh-9rem)] items-center justify-center bg-slate-50">
         <div className="text-center">
-          <h1 className="text-3xl font-semibold tracking-normal text-slate-950">
+          <h1 className="text-3xl font-bold tracking-normal text-slate-950">
             No words saved yet
           </h1>
           <Link
             href="/reader"
-            className="mt-4 inline-flex rounded-md bg-slate-950 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
+            className="mt-4 inline-flex rounded-lg bg-[#4F6EF7] px-5 py-3 text-sm font-semibold text-white shadow-sm shadow-blue-200 transition hover:bg-indigo-600"
           >
             Go to Reader to start saving words
           </Link>
@@ -128,33 +128,55 @@ export default function VocabularyPage() {
   }
 
   return (
-    <section className="mx-auto max-w-6xl">
-      <div className="mb-8 flex flex-col gap-5 border-b border-slate-200 pb-6 md:flex-row md:items-end md:justify-between">
-        <div>
-          <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-3xl font-semibold tracking-normal text-slate-950">
-              My Vocabulary
-            </h1>
-            <span className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-600">
-              {totalCount} words saved
-            </span>
-          </div>
+    <section className="mx-auto max-w-6xl bg-slate-50">
+      <div className="mb-6 flex flex-col gap-5">
+        <div className="flex items-end justify-between gap-4">
+          <h1 className="text-3xl font-bold tracking-normal text-slate-950">
+            My Vocabulary
+          </h1>
+          <span className="shrink-0 pb-1 text-sm font-medium text-slate-500">
+            {totalCount} words saved
+          </span>
         </div>
 
-        <label className="w-full md:max-w-sm">
-          <span className="sr-only">Search words</span>
-          <input
-            type="search"
-            value={searchQuery}
-            onChange={(event) => setSearchQuery(event.target.value)}
-            placeholder="Search words..."
-            className="w-full rounded-md border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
-          />
-        </label>
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <label className="relative min-w-0 flex-1">
+            <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                className="h-4 w-4"
+                aria-hidden="true"
+              >
+                <path
+                  d="m21 21-4.3-4.3M10.8 18a7.2 7.2 0 1 1 0-14.4 7.2 7.2 0 0 1 0 14.4Z"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </span>
+            <span className="sr-only">Search words</span>
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Search saved words..."
+              className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-11 pr-4 text-sm text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-[#4F6EF7] focus:ring-2 focus:ring-blue-100"
+            />
+          </label>
+
+          <button
+            type="button"
+            className="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
+          >
+            ⚯ Filter
+          </button>
+        </div>
       </div>
 
       {filteredWords.length === 0 ? (
-        <div className="rounded-md border border-slate-200 bg-white px-6 py-12 text-center shadow-sm">
+        <div className="rounded-2xl border border-slate-100 bg-white px-6 py-12 text-center shadow-sm">
           <p className="text-sm font-medium text-slate-500">
             No words match your search
           </p>
@@ -166,6 +188,28 @@ export default function VocabularyPage() {
           ))}
         </div>
       )}
+
+      <div className="mt-6 flex flex-col gap-4 rounded-2xl border border-indigo-100 bg-indigo-50 px-5 py-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-[#4F6EF7] ring-1 ring-indigo-100">
+            ✨
+          </div>
+          <div>
+            <p className="text-sm font-bold text-slate-950">
+              Keep learning new words every day.
+            </p>
+            <p className="mt-1 text-sm text-slate-500">
+              Your vocabulary is growing! 👊
+            </p>
+          </div>
+        </div>
+        <Link
+          href="/reader"
+          className="inline-flex justify-center rounded-lg bg-[#4F6EF7] px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-200 transition hover:bg-indigo-600"
+        >
+          Review words
+        </Link>
+      </div>
     </section>
   );
 }
