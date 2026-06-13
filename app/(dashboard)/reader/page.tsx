@@ -15,7 +15,10 @@ import { TranslationPopup } from "@/components/reader/TranslationPopup";
 import { API_ROUTES } from "@/lib/api";
 import { createClient } from "@/lib/supabase/client";
 
-const MAX_FILE_SIZE = 50 * 1024 * 1024;
+const MAX_FILE_SIZE_MB = 150;
+const LARGE_FILE_SIZE_MB = 50;
+const MAX_FILE_SIZE = MAX_FILE_SIZE_MB * 1024 * 1024;
+const LARGE_FILE_SIZE = LARGE_FILE_SIZE_MB * 1024 * 1024;
 const DOCX_MIME_TYPE =
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
@@ -158,6 +161,8 @@ export default function ReaderPage() {
     return null;
   }, [pdfFile]);
 
+  const isLargeDocument = Boolean(pdfFile && pdfFile.size > LARGE_FILE_SIZE);
+
   async function getAccessToken() {
     const supabase = createClient();
     const {
@@ -266,7 +271,9 @@ export default function ReaderPage() {
     setSizeError("");
 
     if (nextFile.size > MAX_FILE_SIZE) {
-      setFileError("File is too large. Maximum size is 50MB.");
+      setFileError(
+        `File is too large. Maximum size is ${MAX_FILE_SIZE_MB}MB.`
+      );
       return;
     }
 
@@ -523,7 +530,8 @@ export default function ReaderPage() {
                   Your files never leave your device
                 </p>
                 <p className="mt-1 text-sm leading-5 text-slate-500">
-                  All processing happens locally in your browser.
+                  Your document stays on your device. LexiFlow only sends
+                  selected words and short context for translation/explanation.
                 </p>
               </div>
             </div>
@@ -623,6 +631,12 @@ export default function ReaderPage() {
       </div>
 
       <div ref={documentContentRef} className="max-w-full overflow-x-hidden px-2 py-6 sm:px-6 sm:py-8">
+        {isLargeDocument ? (
+          <div className="mx-auto mb-4 max-w-4xl rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-700">
+            Large document detected. LexiFlow will open it locally in your
+            browser. This may take a moment, but your file will not be uploaded.
+          </div>
+        ) : null}
         {fileType === "pdf" ? (
           <PDFViewer file={pdfFile} onWordTap={handleWordTap} />
         ) : null}

@@ -6,6 +6,9 @@ import "react-pdf/dist/Page/TextLayer.css";
 
 pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
 
+const INITIAL_VISIBLE_PAGES = 3;
+const PAGES_PER_BATCH = 3;
+
 type WordTapPayload = {
   word: string;
   x: number;
@@ -77,12 +80,14 @@ function getWordFromPoint(x: number, y: number) {
 export function PDFViewer({ file, onWordTap }: PDFViewerProps) {
   const [fileUrl, setFileUrl] = useState<string>("");
   const [numPages, setNumPages] = useState<number>(0);
+  const [visiblePageCount, setVisiblePageCount] = useState(0);
   const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
     const objectUrl = URL.createObjectURL(file);
     setFileUrl(objectUrl);
     setNumPages(0);
+    setVisiblePageCount(0);
     setHasError(false);
 
     return () => {
@@ -92,6 +97,7 @@ export function PDFViewer({ file, onWordTap }: PDFViewerProps) {
 
   function handleLoadSuccess({ numPages: loadedPages }: PDFLoadSuccess) {
     setNumPages(loadedPages);
+    setVisiblePageCount(Math.min(INITIAL_VISIBLE_PAGES, loadedPages));
     setHasError(false);
   }
 
@@ -144,6 +150,8 @@ export function PDFViewer({ file, onWordTap }: PDFViewerProps) {
 
   const pageWidth =
     typeof window === "undefined" ? 750 : Math.min(750, window.innerWidth - 32);
+  const pagesToRender = Math.min(visiblePageCount, numPages);
+  const hasMorePages = pagesToRender < numPages;
 
   return (
     <div
@@ -167,7 +175,14 @@ export function PDFViewer({ file, onWordTap }: PDFViewerProps) {
         onLoadError={handleLoadError}
       >
         <div className="flex max-w-full flex-col items-center gap-6">
-          {Array.from({ length: numPages }, (_, index) => (
+          {numPages > 0 ? (
+            <p className="text-sm text-slate-500">
+              Showing {pagesToRender} of {numPages} pages. More pages load only
+              when you ask for them.
+            </p>
+          ) : null}
+
+          {Array.from({ length: pagesToRender }, (_, index) => (
             <div
               key={`page-${index + 1}`}
               className="max-w-full overflow-hidden rounded-md bg-white shadow-sm ring-1 ring-slate-200"
@@ -180,6 +195,20 @@ export function PDFViewer({ file, onWordTap }: PDFViewerProps) {
               />
             </div>
           ))}
+
+          {hasMorePages ? (
+            <button
+              type="button"
+              onClick={() =>
+                setVisiblePageCount((currentCount) =>
+                  Math.min(currentCount + PAGES_PER_BATCH, numPages)
+                )
+              }
+              className="min-h-11 rounded-lg bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+            >
+              Load more pages
+            </button>
+          ) : null}
         </div>
       </Document>
     </div>
