@@ -27,6 +27,7 @@ const sourceLanguageOptions: LanguageOption[] = [
   { label: "German (DE)", value: "DE" },
   { label: "French (FR)", value: "FR" },
   { label: "Spanish (ES)", value: "ES" },
+  { label: "Uzbek (UZ)", value: "UZ" },
   { label: "Turkish (TR)", value: "TR" },
 ];
 
@@ -60,7 +61,7 @@ export default function SettingsPage() {
   const [isSavingLanguages, setIsSavingLanguages] = useState(false);
   const [languageMessage, setLanguageMessage] = useState("");
   const [telegramMessage, setTelegramMessage] = useState("");
-  const [sourceLang, setSourceLang] = useState("DE");
+  const [sourceLang, setSourceLang] = useState("EN-US");
   const [targetLang, setTargetLang] = useState("RU");
 
   useEffect(() => {
@@ -92,7 +93,7 @@ export default function SettingsPage() {
         if (userRes.ok) {
           const userData = (await userRes.json()) as UserSettingsResponse | null;
           setEmail(userData?.email ?? "");
-          setSourceLang(userData?.source_lang || "DE");
+          setSourceLang(userData?.source_lang || "EN-US");
           setTargetLang(userData?.target_lang || "RU");
         }
       } catch {

@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field
 
 class TranslateRequest(BaseModel):
     text: str = Field(..., max_length=500)
-    source_lang: str = "DE"
+    source_lang: str = "EN-US"
     target_lang: str = "RU"
 
 
@@ -17,7 +17,7 @@ class ExplainRequest(BaseModel):
     sentence: str
     target_lang: str = "RU"
     ui_language: str = "English"
-    source_language: str = "German"
+    source_language: str = "English"
 
 
 class ExplainResponse(BaseModel):
@@ -37,7 +37,7 @@ class WordCreate(BaseModel):
     translation: str
     context_sentence: str = ""
     document_name: str = ""
-    source_lang: str = "DE"
+    source_lang: str = "EN-US"
     target_lang: str = "RU"
 
 
@@ -61,7 +61,7 @@ class UserResponse(BaseModel):
     streak_count: int
     words_total: int
     last_active_date: str | None = None
-    source_lang: str = "DE"
+    source_lang: str = "EN-US"
     target_lang: str = "RU"
 
 

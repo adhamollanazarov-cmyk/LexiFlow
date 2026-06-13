@@ -13,6 +13,11 @@ type DOCXViewerProps = {
   onWordTap?: (payload: WordTapPayload) => void;
 };
 
+type WordRange = {
+  word: string;
+  range: Range;
+};
+
 function isWordChar(character: string) {
   return /[\p{L}\p{N}'’-]/u.test(character);
 }
@@ -43,12 +48,12 @@ function getRangeFromPoint(x: number, y: number) {
   return range;
 }
 
-function getWordFromPoint(x: number, y: number) {
+function getWordRangeFromPoint(x: number, y: number): WordRange | null {
   const range = getRangeFromPoint(x, y);
   const textNode = range?.startContainer;
 
   if (!range || !textNode || textNode.nodeType !== Node.TEXT_NODE) {
-    return "";
+    return null;
   }
 
   const text = textNode.textContent ?? "";
@@ -63,7 +68,17 @@ function getWordFromPoint(x: number, y: number) {
     end += 1;
   }
 
-  return text.slice(start, end).trim();
+  const word = text.slice(start, end).trim();
+
+  if (!word) {
+    return null;
+  }
+
+  const wordRange = document.createRange();
+  wordRange.setStart(textNode, start);
+  wordRange.setEnd(textNode, end);
+
+  return { word, range: wordRange };
 }
 
 export function DOCXViewer({ file, onWordTap }: DOCXViewerProps) {
@@ -106,10 +121,13 @@ export function DOCXViewer({ file, onWordTap }: DOCXViewerProps) {
   }, [file]);
 
   function handleWordTapAtPoint(x: number, y: number) {
-    const word = getWordFromPoint(x, y);
+    const wordRange = getWordRangeFromPoint(x, y);
 
-    if (word) {
-      onWordTap?.({ word, x, y });
+    if (wordRange) {
+      const selection = window.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(wordRange.range);
+      onWordTap?.({ word: wordRange.word, x, y });
     }
   }
 

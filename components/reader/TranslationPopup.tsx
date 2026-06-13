@@ -116,7 +116,7 @@ export function TranslationPopup({
   const [explainError, setExplainError] = useState("");
   const [languagePreferences, setLanguagePreferences] =
     useState<LanguagePreferences>({
-      sourceLang: "DE",
+      sourceLang: "EN-US",
       targetLang: "RU"
     });
 
@@ -155,13 +155,13 @@ export function TranslationPopup({
     });
 
     if (!response.ok) {
-      return { sourceLang: "DE", targetLang: "RU" };
+      return { sourceLang: "EN-US", targetLang: "RU" };
     }
 
     const data = (await response.json()) as UserPreferencesResponse | null;
 
     return {
-      sourceLang: data?.source_lang || "DE",
+      sourceLang: data?.source_lang || "EN-US",
       targetLang: data?.target_lang || "RU"
     };
   }
@@ -196,7 +196,7 @@ export function TranslationPopup({
           },
           body: JSON.stringify({
             text: selectedText,
-            source_lang: detectedSourceLang ?? preferences.sourceLang,
+            source_lang: preferences.sourceLang,
             target_lang: preferences.targetLang
           })
         });
@@ -301,9 +301,7 @@ export function TranslationPopup({
           ui_language:
             LANGUAGE_NAME_BY_CODE[languagePreferences.targetLang] ?? "English",
           source_language:
-            LANGUAGE_NAME_BY_CODE[
-              detectedSourceLang ?? languagePreferences.sourceLang
-            ] ?? "German"
+            LANGUAGE_NAME_BY_CODE[languagePreferences.sourceLang] ?? "English"
         })
       });
 
@@ -365,7 +363,7 @@ export function TranslationPopup({
         x
       </button>
 
-      <p className="pr-8 text-sm font-semibold text-slate-950">
+      <p className="whitespace-normal pr-8 text-sm font-semibold tracking-normal text-slate-950 [letter-spacing:0]">
         {selectedText}
       </p>
 

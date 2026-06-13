@@ -30,7 +30,7 @@ def _create_user_row(user_id: str) -> dict[str, Any]:
                 "email": "",
                 "streak_count": 0,
                 "last_active_date": None,
-                "source_lang": "DE",
+                "source_lang": "EN-US",
                 "target_lang": "RU",
             }
         )
@@ -43,7 +43,7 @@ def _create_user_row(user_id: str) -> dict[str, Any]:
             "email": "",
             "streak_count": 0,
             "last_active_date": None,
-            "source_lang": "DE",
+            "source_lang": "EN-US",
             "target_lang": "RU",
         }
 
@@ -151,7 +151,7 @@ async def get_user_stats(user_id: str) -> dict[str, Any]:
             "words_total": int(count_response.count or 0),
             "email": str(user.get("email") or ""),
             "last_active_date": user.get("last_active_date"),
-            "source_lang": str(user.get("source_lang") or "DE"),
+            "source_lang": str(user.get("source_lang") or "EN-US"),
             "target_lang": str(user.get("target_lang") or "RU"),
         }
 
