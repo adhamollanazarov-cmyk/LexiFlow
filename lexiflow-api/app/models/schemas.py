@@ -48,6 +48,12 @@ class WordResponse(BaseModel):
     context_sentence: str
     document_name: str
     created_at: str
+    next_review_at: str | None = None
+    last_reviewed_at: str | None = None
+    review_count: int = 0
+    review_level: int = 0
+    source_lang: str = ""
+    target_lang: str = ""
 
 
 class VocabularyListResponse(BaseModel):

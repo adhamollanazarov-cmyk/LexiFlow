@@ -81,7 +81,9 @@ async def get_words(user_id: str, limit: int, offset: int) -> tuple[list, int]:
         words_response = (
             supabase.table("words")
             .select(
-                "id, original, translation, context_sentence, document_name, created_at"
+                "id, original, translation, context_sentence, document_name, "
+                "created_at, next_review_at, last_reviewed_at, review_count, "
+                "review_level, source_lang, target_lang"
             )
             .eq("user_id", user_id)
             .order("created_at", desc=True)
@@ -167,18 +169,13 @@ async def update_word_review(
             "good": 3,
             "easy": 7,
         }
-        level_by_rating = {
-            "again": 0,
-            "good": 1,
-            "easy": 2,
-        }
         delay_days = delay_days_by_rating[rating]
         next_review_at = datetime.now(timezone.utc) + timedelta(days=delay_days)
         reviewed_at = datetime.now(timezone.utc)
 
         word_response = (
             supabase.table("words")
-            .select("id, user_id, review_count")
+            .select("id, user_id, review_count, review_level")
             .eq("id", word_id)
             .eq("user_id", user_id)
             .limit(1)
@@ -190,6 +187,14 @@ async def update_word_review(
 
         current_word = word_response.data[0]
         review_count = int(current_word.get("review_count") or 0) + 1
+        current_level = int(current_word.get("review_level") or 0)
+        if rating == "again":
+            review_level = 0
+        elif rating == "good":
+            review_level = min(current_level + 1, 3)
+        else:
+            review_level = min(current_level + 2, 3)
+
         response = (
             supabase.table("words")
             .update(
@@ -197,7 +202,7 @@ async def update_word_review(
                     "next_review_at": next_review_at.isoformat(),
                     "last_reviewed_at": reviewed_at.isoformat(),
                     "review_count": review_count,
-                    "review_level": level_by_rating[rating],
+                    "review_level": review_level,
                 }
             )
             .eq("id", word_id)

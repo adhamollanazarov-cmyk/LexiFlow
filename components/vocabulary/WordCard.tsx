@@ -9,6 +9,12 @@ export type VocabularyWord = {
   context_sentence: string;
   document_name: string;
   created_at: string;
+  next_review_at?: string | null;
+  last_reviewed_at?: string | null;
+  review_count?: number;
+  review_level?: number;
+  source_lang?: string;
+  target_lang?: string;
 };
 
 type WordCardProps = {
@@ -29,9 +35,34 @@ function formatWordDate(value: string) {
   }).format(date);
 }
 
+export function getWordStatus(reviewLevel = 0) {
+  if (reviewLevel >= 3) {
+    return "Known";
+  }
+
+  if (reviewLevel >= 1) {
+    return "Learning";
+  }
+
+  return "New";
+}
+
+function getStatusClassName(status: string) {
+  if (status === "Known") {
+    return "border-emerald-100 bg-emerald-50 text-emerald-700";
+  }
+
+  if (status === "Learning") {
+    return "border-blue-100 bg-blue-50 text-blue-700";
+  }
+
+  return "border-slate-200 bg-slate-50 text-slate-500";
+}
+
 export function WordCard({ word, onDelete }: WordCardProps) {
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const formattedDate = formatWordDate(word.created_at);
+  const status = getWordStatus(word.review_level ?? 0);
 
   return (
     <article className="group relative rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition hover:border-slate-200 hover:shadow-md sm:p-5">
@@ -53,6 +84,18 @@ export function WordCard({ word, onDelete }: WordCardProps) {
             {word.translation}
           </p>
           <p className="mt-1 text-sm font-medium text-slate-400">word</p>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <span
+              className={`rounded-full border px-2.5 py-1 text-xs font-bold ${getStatusClassName(
+                status
+              )}`}
+            >
+              {status}
+            </span>
+            <span className="text-xs font-medium text-slate-400">
+              Reviewed {word.review_count ?? 0} times
+            </span>
+          </div>
         </div>
 
         <div className="flex shrink-0 items-center gap-1 text-slate-400">

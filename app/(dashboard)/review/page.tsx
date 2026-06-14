@@ -69,6 +69,7 @@ export default function DailyReviewPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [isAnswerVisible, setIsAnswerVisible] = useState(false);
 
   const currentWord = words[0] ?? null;
   const progressText = useMemo(() => {
@@ -105,6 +106,12 @@ export default function DailyReviewPage() {
         const nextWords = Array.isArray(data?.words) ? data.words : [];
         setWords(nextWords);
         setTotalDue(nextWords.length);
+        if (nextWords.length > 0) {
+          void trackEvent("daily_review_started", {
+            count: nextWords.length,
+            source: "review",
+          });
+        }
       } catch {
         setErrorMessage("Could not load your daily review.");
       } finally {
@@ -143,6 +150,11 @@ export default function DailyReviewPage() {
         throw new Error("Could not update review");
       }
 
+      void trackEvent("flashcard_reviewed", {
+        action: rating,
+        reviewLevel: currentWord.review_level,
+        source: "review",
+      });
       setWords((currentWords) => {
         const nextWords = currentWords.slice(1);
 
@@ -157,6 +169,7 @@ export default function DailyReviewPage() {
         return nextWords;
       });
       setReviewedCount((currentCount) => currentCount + 1);
+      setIsAnswerVisible(false);
     } catch {
       setErrorMessage("Could not update this review. Please try again.");
     } finally {
@@ -223,7 +236,7 @@ export default function DailyReviewPage() {
                 <h2 className="text-4xl font-bold tracking-normal text-slate-950">
                   {currentWord.original}
                 </h2>
-                {currentWord.translation ? (
+                {isAnswerVisible && currentWord.translation ? (
                   <p className="mt-3 text-xl font-semibold text-[#4F6EF7]">
                     {currentWord.translation}
                   </p>
@@ -236,7 +249,22 @@ export default function DailyReviewPage() {
               ) : null}
             </div>
 
-            {currentWord.context_sentence ? (
+            {!isAnswerVisible ? (
+              <div className="mt-8 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-5 text-center">
+                <p className="text-sm text-slate-500">
+                  Think of the meaning, then reveal the answer.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setIsAnswerVisible(true)}
+                  className="mt-4 min-h-11 rounded-lg bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+                >
+                  Show answer
+                </button>
+              </div>
+            ) : null}
+
+            {isAnswerVisible && currentWord.context_sentence ? (
               <p className="mt-8 rounded-xl bg-slate-50 p-4 text-sm italic leading-6 text-slate-600">
                 &quot;{currentWord.context_sentence}&quot;
               </p>
@@ -252,6 +280,7 @@ export default function DailyReviewPage() {
             </div>
           </article>
 
+          {isAnswerVisible ? (
           <div className="mt-5 grid gap-3 sm:grid-cols-3">
             {reviewActions.map((action) => (
               <button
@@ -268,6 +297,7 @@ export default function DailyReviewPage() {
               </button>
             ))}
           </div>
+          ) : null}
         </>
       )}
     </section>

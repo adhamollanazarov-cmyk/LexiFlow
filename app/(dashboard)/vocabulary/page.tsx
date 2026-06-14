@@ -2,20 +2,81 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { trackEvent } from "@/lib/analytics";
 import { API_ROUTES } from "@/lib/api";
 import { createClient } from "@/lib/supabase/client";
-import { WordCard, type VocabularyWord } from "@/components/vocabulary/WordCard";
+import {
+  WordCard,
+  getWordStatus,
+  type VocabularyWord
+} from "@/components/vocabulary/WordCard";
 
 type VocabularyResponse = {
   words: VocabularyWord[];
   total: number;
 };
 
+type ReviewDueResponse = {
+  words?: VocabularyWord[];
+  total?: number;
+};
+
+function isDueForReview(word: VocabularyWord) {
+  if (!word.next_review_at) {
+    return true;
+  }
+
+  const reviewDate = new Date(word.next_review_at);
+  return !Number.isNaN(reviewDate.getTime()) && reviewDate <= new Date();
+}
+
+function escapeCsvCell(value: string | number | null | undefined) {
+  const stringValue = String(value ?? "");
+  return `"${stringValue.replace(/"/g, '""')}"`;
+}
+
+function exportVocabularyCsv(words: VocabularyWord[]) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const headers = [
+    "word",
+    "translation",
+    "example_context",
+    "explanation",
+    "status",
+    "review_count",
+    "next_review_at"
+  ];
+  const rows = words.map((word) => [
+    word.original,
+    word.translation,
+    word.context_sentence,
+    "",
+    getWordStatus(word.review_level ?? 0),
+    word.review_count ?? 0,
+    word.next_review_at ?? ""
+  ]);
+  const csv = [headers, ...rows]
+    .map((row) => row.map(escapeCsvCell).join(","))
+    .join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+
+  anchor.href = url;
+  anchor.download = "lexiflow-vocabulary.csv";
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
 export default function VocabularyPage() {
   const [words, setWords] = useState<VocabularyWord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [totalCount, setTotalCount] = useState(0);
+  const [todayReviewCount, setTodayReviewCount] = useState(0);
 
   async function getAccessToken() {
     const supabase = createClient();
@@ -34,6 +95,7 @@ export default function VocabularyPage() {
       if (!token) {
         setWords([]);
         setTotalCount(0);
+        setTodayReviewCount(0);
         return;
       }
 
@@ -46,15 +108,35 @@ export default function VocabularyPage() {
       if (!response.ok) {
         setWords([]);
         setTotalCount(0);
+        setTodayReviewCount(0);
         return;
       }
 
       const data = (await response.json()) as VocabularyResponse | null;
-      setWords(Array.isArray(data?.words) ? data.words : []);
+      const nextWords = Array.isArray(data?.words) ? data.words : [];
+      setWords(nextWords);
       setTotalCount(typeof data?.total === "number" ? data.total : 0);
+
+      const reviewResponse = await fetch(`${API_ROUTES.reviewDue}?limit=20`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (reviewResponse.ok) {
+        const reviewData = (await reviewResponse.json()) as ReviewDueResponse | null;
+        setTodayReviewCount(
+          typeof reviewData?.total === "number"
+            ? reviewData.total
+            : nextWords.filter(isDueForReview).length
+        );
+      } else {
+        setTodayReviewCount(nextWords.filter(isDueForReview).length);
+      }
     } catch {
       setWords([]);
       setTotalCount(0);
+      setTodayReviewCount(0);
     } finally {
       setIsLoading(false);
     }
@@ -86,6 +168,7 @@ export default function VocabularyPage() {
   }
 
   useEffect(() => {
+    void trackEvent("vocabulary_opened", { source: "vocabulary" });
     fetchWords();
   }, []);
 
@@ -98,6 +181,47 @@ export default function VocabularyPage() {
         word.translation.toLowerCase().includes(normalizedSearch)
     );
   }, [searchQuery, words]);
+
+  useEffect(() => {
+    const normalizedSearch = searchQuery.trim();
+
+    if (!normalizedSearch) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      void trackEvent("vocabulary_search_used", {
+        count: filteredWords.length,
+        queryLength: normalizedSearch.length,
+        source: "vocabulary"
+      });
+    }, 600);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [filteredWords.length, searchQuery]);
+
+  const learningCount = useMemo(
+    () =>
+      words.filter((word) => {
+        const level = word.review_level ?? 0;
+        return level >= 1 && level <= 2;
+      }).length,
+    [words]
+  );
+  const knownCount = useMemo(
+    () => words.filter((word) => (word.review_level ?? 0) >= 3).length,
+    [words]
+  );
+
+  function handleExportCsv() {
+    exportVocabularyCsv(words);
+    void trackEvent("vocabulary_export_clicked", {
+      count: words.length,
+      source: "vocabulary"
+    });
+  }
 
   if (isLoading) {
     return (
@@ -139,6 +263,63 @@ export default function VocabularyPage() {
           </span>
         </div>
 
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+            <p className="text-sm font-semibold text-slate-500">Total saved</p>
+            <p className="mt-2 text-3xl font-bold text-slate-950">
+              {totalCount}
+            </p>
+          </div>
+          <Link
+            href="/review"
+            className="rounded-2xl border border-indigo-100 bg-indigo-50 p-4 shadow-sm transition hover:border-indigo-200 hover:bg-indigo-100"
+          >
+            <p className="text-sm font-semibold text-indigo-700">
+              Today&apos;s review
+            </p>
+            <p className="mt-2 text-3xl font-bold text-slate-950">
+              {todayReviewCount}
+            </p>
+          </Link>
+          <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+            <p className="text-sm font-semibold text-slate-500">
+              Learning words
+            </p>
+            <p className="mt-2 text-3xl font-bold text-slate-950">
+              {learningCount}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+            <p className="text-sm font-semibold text-slate-500">Known words</p>
+            <p className="mt-2 text-3xl font-bold text-slate-950">
+              {knownCount}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-3 rounded-2xl border border-indigo-100 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-base font-bold text-slate-950">
+              Today&apos;s review: {todayReviewCount} words
+            </p>
+            <p className="mt-1 text-sm text-slate-500">
+              Review due words as flashcards and keep them fresh.
+            </p>
+          </div>
+          <Link
+            href="/review"
+            onClick={() =>
+              void trackEvent("daily_review_started", {
+                count: todayReviewCount,
+                source: "vocabulary"
+              })
+            }
+            className="inline-flex min-h-11 items-center justify-center rounded-lg bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+          >
+            Start review
+          </Link>
+        </div>
+
         <div className="flex flex-col gap-3 sm:flex-row">
           <label className="relative min-w-0 flex-1">
             <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
@@ -170,7 +351,14 @@ export default function VocabularyPage() {
             type="button"
             className="min-h-12 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
           >
-            ⚯ Filter
+            Filter
+          </button>
+          <button
+            type="button"
+            onClick={handleExportCsv}
+            className="min-h-12 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
+          >
+            Export CSV
           </button>
         </div>
       </div>
@@ -192,19 +380,19 @@ export default function VocabularyPage() {
       <div className="mt-6 flex flex-col gap-4 rounded-2xl border border-indigo-100 bg-indigo-50 px-5 py-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-start gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-[#4F6EF7] ring-1 ring-indigo-100">
-            ✨
+            *
           </div>
           <div>
             <p className="text-sm font-bold text-slate-950">
               Keep learning new words every day.
             </p>
             <p className="mt-1 text-sm text-slate-500">
-              Your vocabulary is growing! 👊
+              Your vocabulary is growing.
             </p>
           </div>
         </div>
         <Link
-          href="/reader"
+          href="/review"
           className="inline-flex min-h-11 items-center justify-center rounded-lg bg-[#4F6EF7] px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-200 transition hover:bg-indigo-600"
         >
           Review words

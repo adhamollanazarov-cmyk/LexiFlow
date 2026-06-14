@@ -10,3 +10,9 @@ yarn-debug.log*
 yarn-error.log*
 .vercel
 *.tsbuildinfo
+# TypeScript cache
+*.tsbuildinfo
+
+# Python cache
+__pycache__/
+*.pyc
