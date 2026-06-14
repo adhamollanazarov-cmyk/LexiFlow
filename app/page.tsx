@@ -41,12 +41,11 @@ const footerFeatures = [
   },
 ];
 
-const avatars = [
-  { initials: "AR", className: "bg-indigo-100 text-indigo-700" },
-  { initials: "MK", className: "bg-sky-100 text-sky-700" },
-  { initials: "SL", className: "bg-emerald-100 text-emerald-700" },
-  { initials: "JP", className: "bg-violet-100 text-violet-700" },
-  { initials: "ND", className: "bg-amber-100 text-amber-700" },
+const demoSteps = [
+  "Open a PDF or DOCX",
+  "Click any difficult word",
+  "Get translation and AI explanation",
+  "Save it to your vocabulary",
 ];
 
 export default function HomePage() {
@@ -155,24 +154,114 @@ export default function HomePage() {
             ))}
           </div>
 
-          <div className="mx-auto mt-10 flex max-w-3xl flex-col flex-wrap items-center justify-center gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-5 text-center shadow-sm sm:flex-row sm:gap-6">
+          <div className="mx-auto mt-10 max-w-3xl rounded-2xl border border-slate-200 bg-white px-5 py-5 text-center shadow-sm">
             <p className="text-sm font-medium text-slate-500">
-              Trusted by readers worldwide
+              Built for students, language learners, and curious readers.
             </p>
-            <div className="flex -space-x-2">
-              {avatars.map((avatar) => (
-                <span
-                  key={avatar.initials}
-                  className={`flex h-9 w-9 items-center justify-center rounded-full border-2 border-white text-sm font-bold ${avatar.className}`}
+            <p className="mt-2 text-sm leading-6 text-slate-500">
+              Early MVP. Help us build the best private document reader for
+              language learners.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-white">
+        <div className="mx-auto grid max-w-6xl gap-10 px-5 py-16 sm:px-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+          <div>
+            <h2 className="text-3xl font-bold tracking-normal text-slate-950 sm:text-4xl">
+              See LexiFlow in action
+            </h2>
+            <p className="mt-4 max-w-xl text-base leading-7 text-slate-500">
+              Open a document, click a difficult word, get translation and AI
+              explanation, then save it to your vocabulary.
+            </p>
+
+            <div className="mt-8 grid gap-3">
+              {demoSteps.map((step, index) => (
+                <div
+                  key={step}
+                  className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
                 >
-                  {avatar.initials}
-                </span>
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#4F6EF7] text-sm font-bold text-white">
+                    {index + 1}
+                  </span>
+                  <span className="text-sm font-semibold text-slate-700">
+                    {step}
+                  </span>
+                </div>
               ))}
             </div>
-            <div className="flex items-center gap-2 text-sm">
-              <span className="text-amber-400">★★★★★</span>
-              <span className="font-bold text-slate-950">4.9</span>
-              <span className="text-slate-500">from 1,200+ users</span>
+          </div>
+
+          <div className="rounded-[2rem] border border-slate-200 bg-slate-50 p-3 shadow-2xl shadow-blue-100">
+            <div className="overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white">
+              <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <span className="h-3 w-3 rounded-full bg-red-300" />
+                  <span className="h-3 w-3 rounded-full bg-amber-300" />
+                  <span className="h-3 w-3 rounded-full bg-emerald-300" />
+                </div>
+                <span className="rounded-full bg-blue-50 px-3 py-1 text-sm font-semibold text-[#4F6EF7]">
+                  UI preview
+                </span>
+              </div>
+
+              <div className="grid gap-4 p-4 md:grid-cols-[1.1fr_0.9fr]">
+                <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+                  <div className="mb-4 flex items-center justify-between">
+                    <span className="text-sm font-bold text-slate-950">
+                      Climate_Report.pdf
+                    </span>
+                    <span className="rounded-full bg-emerald-50 px-3 py-1 text-sm font-semibold text-emerald-700">
+                      Local only
+                    </span>
+                  </div>
+                  <div className="space-y-3 text-sm leading-7 text-slate-500">
+                    <p>
+                      Reading complex documents becomes easier when every word
+                      is only one click away.
+                    </p>
+                    <p>
+                      <span className="rounded-md bg-blue-100 px-1.5 py-1 font-semibold text-[#4F6EF7]">
+                        Unfortunately
+                      </span>
+                      , some technical phrases slow readers down.
+                    </p>
+                    <p>
+                      LexiFlow keeps the document in your browser and sends only
+                      selected text for help.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                  <div className="grid grid-cols-2 gap-2">
+                    <span className="rounded-lg bg-slate-950 px-3 py-2 text-center text-sm font-semibold text-white">
+                      Translation
+                    </span>
+                    <span className="rounded-lg bg-slate-100 px-3 py-2 text-center text-sm font-semibold text-slate-500">
+                      AI Explain
+                    </span>
+                  </div>
+                  <p className="mt-5 text-sm font-bold text-slate-950">
+                    Unfortunately
+                  </p>
+                  <p className="mt-2 text-lg font-semibold text-[#4F6EF7]">
+                    unfortunately
+                  </p>
+                  <p className="mt-4 rounded-xl bg-slate-50 p-3 text-sm leading-6 text-slate-500">
+                    Save the word with its sentence so you can review it later
+                    in Vocabulary.
+                  </p>
+                  <button
+                    type="button"
+                    className="mt-4 min-h-11 w-full rounded-xl bg-[#4F6EF7] px-4 py-3 text-sm font-semibold text-white"
+                  >
+                    Save to vocabulary
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

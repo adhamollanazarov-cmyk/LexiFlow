@@ -92,6 +92,19 @@ function getWordRangeFromPoint(x: number, y: number): WordRange | null {
   return { word, range: wordRange };
 }
 
+function isPointInsideSelection(selection: Selection, x: number, y: number) {
+  if (selection.rangeCount === 0) {
+    return false;
+  }
+
+  const range = selection.getRangeAt(0);
+
+  return Array.from(range.getClientRects()).some(
+    (rect) =>
+      x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom
+  );
+}
+
 export function PDFViewer({ file, onWordTap }: PDFViewerProps) {
   const [fileUrl, setFileUrl] = useState<string>("");
   const [numPages, setNumPages] = useState<number>(0);
@@ -132,7 +145,12 @@ export function PDFViewer({ file, onWordTap }: PDFViewerProps) {
   }
 
   function handleClick(event: MouseEvent<HTMLDivElement>) {
-    if (window.getSelection()?.toString().trim()) {
+    const selection = window.getSelection();
+
+    if (
+      selection?.toString().trim() &&
+      isPointInsideSelection(selection, event.clientX, event.clientY)
+    ) {
       return;
     }
 
