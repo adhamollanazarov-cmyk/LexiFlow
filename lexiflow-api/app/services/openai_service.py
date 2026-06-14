@@ -105,3 +105,52 @@ async def translate_to_uzbek(text: str) -> str:
             status_code=500,
             detail="Translation service unavailable",
         ) from exc
+
+
+async def get_simple_definition(text: str, context: str, language: str) -> str:
+    if not settings.OPENAI_API_KEY:
+        raise HTTPException(
+            status_code=500,
+            detail="OPENAI_API_KEY is not configured",
+        )
+
+    client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+    safe_context = context[:300]
+
+    try:
+        response = await client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        f"You are a beginner-friendly dictionary. Respond in {language}. "
+                        "Give one short simple meaning for the selected word or phrase. "
+                        "Use one sentence only. Do not translate the whole context. "
+                        "Do not add examples, quotes, or extra labels."
+                    ),
+                },
+                {
+                    "role": "user",
+                    "content": f"Word: {text}\nContext: {safe_context}",
+                },
+            ],
+            max_tokens=80,
+            temperature=0.2,
+        )
+        definition = response.choices[0].message.content
+
+        if not definition:
+            raise HTTPException(
+                status_code=500,
+                detail="Definition service unavailable",
+            )
+
+        return definition.strip()
+    except HTTPException:
+        raise
+    except OpenAIError as exc:
+        raise HTTPException(
+            status_code=500,
+            detail="Definition service unavailable",
+        ) from exc

@@ -23,6 +23,7 @@ type ActiveTab = "translation" | "explain";
 
 type TranslateResponse = {
   translation: string;
+  mode?: "translation" | "meaning";
 };
 
 type ExplainResponse = {
@@ -58,6 +59,14 @@ const LANGUAGE_NAME_BY_CODE: Record<string, string> = {
   UZ: "Uzbek",
   TR: "Turkish"
 };
+
+function getLanguageName(code: string) {
+  return LANGUAGE_NAME_BY_CODE[code.toUpperCase()] ?? code.toUpperCase();
+}
+
+function isSameLanguage(sourceLang: string, targetLang: string) {
+  return getLanguageName(sourceLang) === getLanguageName(targetLang);
+}
 
 function parseExplanationResponse(response: string): ParsedExplanation {
   const [rawExplanation, rawExamples = ""] = response.split(EXAMPLES_MARKER);
@@ -108,6 +117,8 @@ export function TranslationPopup({
   const popupRef = useRef<HTMLDivElement | null>(null);
   const [activeTab, setActiveTab] = useState<ActiveTab>("translation");
   const [translation, setTranslation] = useState<string | null>(null);
+  const [translationMode, setTranslationMode] =
+    useState<"translation" | "meaning">("translation");
   const [isLoading, setIsLoading] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -174,6 +185,7 @@ export function TranslationPopup({
       setActiveTab("translation");
       setIsLoading(true);
       setTranslation(null);
+      setTranslationMode("translation");
       setIsSaved(false);
       setErrorMessage("");
       setExplanation(null);
@@ -198,7 +210,8 @@ export function TranslationPopup({
           body: JSON.stringify({
             text: selectedText,
             source_lang: preferences.sourceLang,
-            target_lang: preferences.targetLang
+            target_lang: preferences.targetLang,
+            context: contextSentence
           })
         });
 
@@ -213,10 +226,17 @@ export function TranslationPopup({
         }
 
         if (isActive) {
+          const nextMode =
+            data.mode === "meaning" ||
+            isSameLanguage(preferences.sourceLang, preferences.targetLang)
+              ? "meaning"
+              : "translation";
           setLanguagePreferences(preferences);
           setTranslation(data.translation);
+          setTranslationMode(nextMode);
           void trackEvent("translation_used", {
             documentLanguage: preferences.sourceLang,
+            mode: nextMode,
             source: "reader",
             success: true,
             translationLanguage: preferences.targetLang,
@@ -238,7 +258,7 @@ export function TranslationPopup({
     return () => {
       isActive = false;
     };
-  }, [selectedText]);
+  }, [contextSentence, selectedText]);
 
   useEffect(() => {
     if (!popupRef.current) {
@@ -390,7 +410,7 @@ export function TranslationPopup({
               : "bg-slate-100 text-slate-600 hover:bg-slate-200"
           }`}
         >
-          Translation
+          {translationMode === "meaning" ? "Meaning" : "Translation"}
         </button>
         <button
           type="button"
@@ -411,14 +431,24 @@ export function TranslationPopup({
             {isLoading ? (
               <div className="flex items-center gap-3 text-sm text-slate-500">
                 <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-slate-900" />
-                Translating...
+                {translationMode === "meaning"
+                  ? "Finding meaning..."
+                  : "Translating..."}
               </div>
             ) : null}
 
             {!isLoading && translation ? (
-              <p className="text-base font-medium text-slate-800">
-                {translation}
-              </p>
+              <div>
+                {translationMode === "meaning" ? (
+                  <p className="mb-2 text-sm leading-5 text-slate-500">
+                    Same language selected, so LexiFlow shows a simple meaning
+                    instead of a translation.
+                  </p>
+                ) : null}
+                <p className="text-base font-medium text-slate-800">
+                  {translation}
+                </p>
+              </div>
             ) : null}
 
             {!isLoading && errorMessage ? (

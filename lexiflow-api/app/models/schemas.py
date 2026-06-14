@@ -5,11 +5,13 @@ class TranslateRequest(BaseModel):
     text: str = Field(..., max_length=500)
     source_lang: str = "EN-US"
     target_lang: str = "RU"
+    context: str = Field("", max_length=300)
 
 
 class TranslateResponse(BaseModel):
     translation: str
     provider: str = "deepl"
+    mode: str = "translation"
 
 
 class ExplainRequest(BaseModel):
