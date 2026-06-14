@@ -2,50 +2,47 @@ import Link from "next/link";
 
 const featurePills = [
   {
-    icon: "🛡️",
-    title: "100% Private",
-    text: "Files stay on your device",
+    label: "Local",
+    title: "Open PDF/DOCX",
+    text: "Read academic documents directly in your browser."
   },
   {
-    icon: "📖",
-    title: "Smart Vocabulary",
-    text: "Save words and see them in context",
+    label: "Click",
+    title: "Translate hard words",
+    text: "Click difficult words when you get stuck."
   },
   {
-    icon: "⚡",
-    title: "Faster Understanding",
-    text: "Read more. Learn more. Remember more.",
-  },
+    label: "Review",
+    title: "Build vocabulary",
+    text: "Save words and review them later with flashcards."
+  }
+];
+
+const howItWorksSteps = [
+  "Open your PDF or DOCX",
+  "Click a difficult word",
+  "Get translation and simple explanation",
+  "Save it to Vocabulary",
+  "Review with Daily Review"
 ];
 
 const footerFeatures = [
   {
-    icon: "🛡️",
-    title: "Private by design",
-    text: "Your files stay on your device. We never see your documents.",
+    title: "Your document stays private",
+    text: "LexiFlow reads your document locally in your browser."
   },
   {
-    icon: "⚡",
-    title: "Built for focus",
-    text: "Clean reading experience that keeps you in flow.",
+    title: "Translation when you ask",
+    text: "Only the selected word and short context are sent for help."
   },
   {
-    icon: "📖",
     title: "Vocabulary that sticks",
-    text: "Save words in context and review them anytime.",
+    text: "Save words in context and review them when they are due."
   },
   {
-    icon: "✨",
-    title: "Modern & intuitive",
-    text: "A beautiful experience that works effortlessly.",
-  },
-];
-
-const demoSteps = [
-  "Open a PDF or DOCX",
-  "Click any difficult word",
-  "Get translation and AI explanation",
-  "Save it to your vocabulary",
+    title: "Built for learners",
+    text: "Designed for students reading foreign-language academic PDFs."
+  }
 ];
 
 export default function HomePage() {
@@ -58,7 +55,7 @@ export default function HomePage() {
               L
             </span>
             <span className="text-xl font-bold tracking-normal text-slate-950">
-              LexiFlow
+              LexiFlowAI
             </span>
           </Link>
 
@@ -81,164 +78,77 @@ export default function HomePage() {
 
       <section className="relative overflow-hidden bg-gradient-to-b from-white via-white to-slate-50">
         <div className="mx-auto max-w-6xl px-5 pb-16 pt-14 text-center sm:px-8 sm:pb-20 sm:pt-20">
-          <div className="mx-auto inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700">
-            🔒 Your files never leave your device
+          <div className="mx-auto inline-flex items-center rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-sm font-semibold text-[#4F6EF7]">
+            Private PDF reader for language learners
           </div>
 
-          <h1 className="mx-auto mt-7 max-w-3xl text-3xl font-bold leading-tight tracking-normal text-slate-950 sm:text-5xl lg:text-6xl">
-            Read any document.
+          <h1 className="mx-auto mt-7 max-w-4xl text-3xl font-bold leading-tight tracking-normal text-slate-950 sm:text-5xl lg:text-6xl">
+            Read English PDFs
             <br />
-            Understand{" "}
-            <span className="text-[#4F6EF7]">every word.</span>
+            <span className="text-[#4F6EF7]">without getting stuck.</span>
           </h1>
 
           <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-slate-500 sm:text-lg">
-            LexiFlow helps you read with confidence, save new words, and truly
-            understand what you read.
+            Click any word to translate, understand, and save it. Your document
+            stays on your device.
           </p>
 
-          <div className="mt-9 flex justify-center">
+          <p className="mx-auto mt-4 max-w-2xl text-sm font-semibold text-slate-600">
+            For students reading academic PDFs in a foreign language.
+          </p>
+
+          <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
             <Link
               href="/login"
               className="inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-slate-950 px-7 py-4 text-base font-semibold text-white shadow-xl shadow-slate-300 transition hover:bg-slate-800 sm:w-auto"
             >
-              Get Started →
+              Start reading
+            </Link>
+            <Link
+              href="/privacy"
+              className="inline-flex min-h-12 w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-7 py-4 text-base font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 sm:w-auto"
+            >
+              View privacy
             </Link>
           </div>
 
-          <div className="relative mx-auto mt-14 h-44 max-w-4xl overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-2xl shadow-blue-100 sm:h-56">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(79,110,247,0.16),transparent_28%),radial-gradient(circle_at_80%_30%,rgba(34,197,94,0.12),transparent_24%),linear-gradient(180deg,#ffffff_0%,#eff6ff_100%)]" />
-            <svg
-              className="absolute inset-x-0 bottom-0 h-full w-full"
-              viewBox="0 0 900 260"
-              fill="none"
-              role="img"
-              aria-label="Abstract blue wave illustration"
-            >
-              <path
-                d="M0 190C90 148 163 212 254 174C346 136 397 72 494 119C598 170 655 215 752 162C813 129 852 116 900 122V260H0V190Z"
-                fill="url(#waveOne)"
-              />
-              <path
-                d="M0 214C114 156 185 232 293 187C394 145 456 119 545 158C646 203 721 199 811 150C849 129 878 124 900 128V260H0V214Z"
-                fill="url(#waveTwo)"
-              />
-              <path
-                d="M0 206C106 171 190 236 303 199C414 163 489 132 589 178C694 226 790 175 900 166"
-                stroke="#4F6EF7"
-                strokeWidth="5"
-                strokeLinecap="round"
-                opacity="0.22"
-              />
-              <defs>
-                <linearGradient id="waveOne" x1="0" x2="900" y1="110" y2="226">
-                  <stop stopColor="#DBEAFE" />
-                  <stop offset="0.48" stopColor="#93C5FD" />
-                  <stop offset="1" stopColor="#C4B5FD" />
-                </linearGradient>
-                <linearGradient id="waveTwo" x1="0" x2="900" y1="146" y2="250">
-                  <stop stopColor="#E0F2FE" />
-                  <stop offset="0.5" stopColor="#60A5FA" stopOpacity="0.72" />
-                  <stop offset="1" stopColor="#4F6EF7" stopOpacity="0.5" />
-                </linearGradient>
-              </defs>
-            </svg>
-          </div>
-
-          <div className="mx-auto mt-10 grid max-w-4xl gap-4 sm:grid-cols-3">
-            {featurePills.map((feature) => (
-              <div
-                key={feature.title}
-                className="rounded-2xl border border-slate-200 bg-white p-5 text-center shadow-sm"
-              >
-                <div className="text-2xl">{feature.icon}</div>
-                <h2 className="mt-3 text-sm font-bold text-slate-950">
-                  {feature.title}
-                </h2>
-                <p className="mt-1 text-sm leading-6 text-slate-500">
-                  {feature.text}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          <div className="mx-auto mt-10 max-w-3xl rounded-2xl border border-slate-200 bg-white px-5 py-5 text-center shadow-sm">
-            <p className="text-sm font-medium text-slate-500">
-              Built for students, language learners, and curious readers.
-            </p>
-            <p className="mt-2 text-sm leading-6 text-slate-500">
-              Early MVP. Help us build the best private document reader for
-              language learners.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-white">
-        <div className="mx-auto grid max-w-6xl gap-10 px-5 py-16 sm:px-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
-          <div>
-            <h2 className="text-3xl font-bold tracking-normal text-slate-950 sm:text-4xl">
-              See LexiFlow in action
-            </h2>
-            <p className="mt-4 max-w-xl text-base leading-7 text-slate-500">
-              Open a document, click a difficult word, get translation and AI
-              explanation, then save it to your vocabulary.
-            </p>
-
-            <div className="mt-8 grid gap-3">
-              {demoSteps.map((step, index) => (
-                <div
-                  key={step}
-                  className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
-                >
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#4F6EF7] text-sm font-bold text-white">
-                    {index + 1}
-                  </span>
-                  <span className="text-sm font-semibold text-slate-700">
-                    {step}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="rounded-[2rem] border border-slate-200 bg-slate-50 p-3 shadow-2xl shadow-blue-100">
-            <div className="overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white">
+          <div className="relative mx-auto mt-14 max-w-4xl overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-3 shadow-2xl shadow-blue-100">
+            <div className="overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white text-left">
               <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
                 <div className="flex items-center gap-2">
                   <span className="h-3 w-3 rounded-full bg-red-300" />
                   <span className="h-3 w-3 rounded-full bg-amber-300" />
                   <span className="h-3 w-3 rounded-full bg-emerald-300" />
                 </div>
-                <span className="rounded-full bg-blue-50 px-3 py-1 text-sm font-semibold text-[#4F6EF7]">
-                  UI preview
+                <span className="rounded-full bg-emerald-50 px-3 py-1 text-sm font-semibold text-emerald-700">
+                  Local document
                 </span>
               </div>
 
-              <div className="grid gap-4 p-4 md:grid-cols-[1.1fr_0.9fr]">
+              <div className="grid gap-4 bg-slate-50 p-4 md:grid-cols-[1.1fr_0.9fr]">
                 <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
-                  <div className="mb-4 flex items-center justify-between">
+                  <div className="mb-4 flex items-center justify-between gap-3">
                     <span className="text-sm font-bold text-slate-950">
-                      Climate_Report.pdf
+                      Academic PDF
                     </span>
-                    <span className="rounded-full bg-emerald-50 px-3 py-1 text-sm font-semibold text-emerald-700">
-                      Local only
+                    <span className="rounded-full bg-blue-50 px-3 py-1 text-sm font-semibold text-[#4F6EF7]">
+                      Browser only
                     </span>
                   </div>
                   <div className="space-y-3 text-sm leading-7 text-slate-500">
                     <p>
-                      Reading complex documents becomes easier when every word
-                      is only one click away.
+                      Students often lose momentum when a single word blocks
+                      the whole paragraph.
                     </p>
                     <p>
                       <span className="rounded-md bg-blue-100 px-1.5 py-1 font-semibold text-[#4F6EF7]">
                         Unfortunately
                       </span>
-                      , some technical phrases slow readers down.
+                      , academic texts can make simple ideas feel difficult.
                     </p>
                     <p>
-                      LexiFlow keeps the document in your browser and sends only
-                      selected text for help.
+                      LexiFlowAI keeps the document local and helps only with
+                      the word you choose.
                     </p>
                   </div>
                 </div>
@@ -256,40 +166,145 @@ export default function HomePage() {
                     Unfortunately
                   </p>
                   <p className="mt-2 text-lg font-semibold text-[#4F6EF7]">
-                    unfortunately
+                    Translation appears here
                   </p>
                   <p className="mt-4 rounded-xl bg-slate-50 p-3 text-sm leading-6 text-slate-500">
-                    Save the word with its sentence so you can review it later
-                    in Vocabulary.
+                    Get a simple explanation, then save the word for Daily
+                    Review.
                   </p>
                   <button
                     type="button"
                     className="mt-4 min-h-11 w-full rounded-xl bg-[#4F6EF7] px-4 py-3 text-sm font-semibold text-white"
                   >
-                    Save to vocabulary
+                    Save to Vocabulary
                   </button>
                 </div>
               </div>
             </div>
           </div>
+
+          <div className="mx-auto mt-10 grid max-w-4xl gap-4 sm:grid-cols-3">
+            {featurePills.map((feature) => (
+              <div
+                key={feature.title}
+                className="rounded-2xl border border-slate-200 bg-white p-5 text-center shadow-sm"
+              >
+                <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-sm font-bold text-[#4F6EF7]">
+                  {feature.label}
+                </div>
+                <h2 className="mt-3 text-sm font-bold text-slate-950">
+                  {feature.title}
+                </h2>
+                <p className="mt-1 text-sm leading-6 text-slate-500">
+                  {feature.text}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
-      <section className="border-t border-slate-200 bg-slate-50">
-        <div className="mx-auto grid max-w-6xl grid-cols-2 gap-4 px-4 py-10 sm:px-8 lg:grid-cols-4">
-          {footerFeatures.map((feature) => (
-            <div key={feature.title} className="rounded-2xl bg-white p-5 shadow-sm">
-              <div className="text-2xl">{feature.icon}</div>
-              <h3 className="mt-3 text-sm font-bold text-slate-950">
-                {feature.title}
-              </h3>
-              <p className="mt-2 text-sm leading-6 text-slate-500">
-                {feature.text}
-              </p>
-            </div>
-          ))}
+      <section id="how-it-works" className="bg-white">
+        <div className="mx-auto max-w-6xl px-5 py-16 sm:px-8">
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="text-3xl font-bold tracking-normal text-slate-950 sm:text-4xl">
+              How it works
+            </h2>
+            <p className="mt-4 text-base leading-7 text-slate-500">
+              A focused reading flow for foreign-language PDFs and class
+              materials.
+            </p>
+          </div>
+
+          <div className="mt-10 grid gap-4 md:grid-cols-5">
+            {howItWorksSteps.map((step, index) => (
+              <div
+                key={step}
+                className="rounded-2xl border border-slate-200 bg-slate-50 p-5 shadow-sm"
+              >
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#4F6EF7] text-sm font-bold text-white">
+                  {index + 1}
+                </span>
+                <p className="mt-4 text-sm font-bold leading-6 text-slate-950">
+                  {step}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
-        <div className="mx-auto flex max-w-6xl justify-center border-t border-slate-200 px-4 py-6 sm:px-8">
+      </section>
+
+      <section className="border-y border-slate-200 bg-slate-50">
+        <div className="mx-auto grid max-w-6xl gap-8 px-5 py-16 sm:px-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
+          <div>
+            <h2 className="text-3xl font-bold tracking-normal text-slate-950 sm:text-4xl">
+              Your document stays private.
+            </h2>
+            <p className="mt-4 text-base leading-7 text-slate-500">
+              LexiFlow reads your document locally in your browser. We only send
+              the selected word and short context when you ask for translation
+              or AI explanation.
+            </p>
+            <Link
+              href="/privacy"
+              className="mt-6 inline-flex min-h-11 items-center justify-center rounded-lg bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+            >
+              Read the privacy page
+            </Link>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            {footerFeatures.map((feature) => (
+              <div
+                key={feature.title}
+                className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+              >
+                <h3 className="text-sm font-bold text-slate-950">
+                  {feature.title}
+                </h3>
+                <p className="mt-2 text-sm leading-6 text-slate-500">
+                  {feature.text}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-white">
+        <div className="mx-auto max-w-6xl px-5 py-14 text-center sm:px-8">
+          <div className="rounded-[2rem] border border-slate-200 bg-white px-5 py-10 shadow-sm">
+            <h2 className="text-2xl font-bold tracking-normal text-slate-950 sm:text-3xl">
+              For students, language learners, and anyone reading academic PDFs
+              in a foreign language.
+            </h2>
+            <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-500">
+              LexiFlowAI is for the moment when you understand the topic, but a
+              few difficult words slow you down.
+            </p>
+            <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
+              <Link
+                href="/login"
+                className="inline-flex min-h-12 items-center justify-center rounded-xl bg-[#4F6EF7] px-7 py-4 text-base font-semibold text-white shadow-lg shadow-blue-200 transition hover:bg-indigo-600"
+              >
+                Start reading
+              </Link>
+              <Link
+                href="#how-it-works"
+                className="inline-flex min-h-12 items-center justify-center rounded-xl border border-slate-300 px-7 py-4 text-base font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
+              >
+                See how it works
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer className="border-t border-slate-200 bg-slate-50">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-5 py-6 sm:flex-row sm:px-8">
+          <p className="text-sm font-medium text-slate-500">
+            LexiFlowAI - private document reading for language learners.
+          </p>
           <Link
             href="/privacy"
             className="text-sm font-semibold text-slate-500 transition hover:text-slate-950"
@@ -297,7 +312,7 @@ export default function HomePage() {
             Privacy
           </Link>
         </div>
-      </section>
+      </footer>
     </main>
   );
 }
