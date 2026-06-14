@@ -62,12 +62,20 @@ export default function HomePage() {
             </span>
           </Link>
 
-          <Link
-            href="/login"
-            className="flex min-h-11 items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
-          >
-            Sign in
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/privacy"
+              className="hidden min-h-11 items-center px-2 text-sm font-semibold text-slate-500 transition hover:text-slate-950 sm:flex"
+            >
+              Privacy
+            </Link>
+            <Link
+              href="/login"
+              className="flex min-h-11 items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
+            >
+              Sign in
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -280,6 +288,14 @@ export default function HomePage() {
               </p>
             </div>
           ))}
+        </div>
+        <div className="mx-auto flex max-w-6xl justify-center border-t border-slate-200 px-4 py-6 sm:px-8">
+          <Link
+            href="/privacy"
+            className="text-sm font-semibold text-slate-500 transition hover:text-slate-950"
+          >
+            Privacy
+          </Link>
         </div>
       </section>
     </main>
