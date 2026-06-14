@@ -124,6 +124,95 @@ async def delete_word(word_id: str, user_id: str) -> bool:
     return await asyncio.to_thread(delete_selected_word)
 
 
+async def get_due_review_words(user_id: str, limit: int) -> tuple[list, int]:
+    def select_due_words() -> tuple[list, int]:
+        now_iso = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        due_filter = f"next_review_at.is.null,next_review_at.lte.{now_iso}"
+
+        words_response = (
+            supabase.table("words")
+            .select(
+                "id, original, translation, context_sentence, document_name, "
+                "source_lang, target_lang, created_at, review_count, review_level"
+            )
+            .eq("user_id", user_id)
+            .or_(due_filter)
+            .order("next_review_at", desc=False)
+            .order("created_at", desc=True)
+            .limit(limit)
+            .execute()
+        )
+
+        count_response = (
+            supabase.table("words")
+            .select("id", count="exact")
+            .eq("user_id", user_id)
+            .or_(due_filter)
+            .execute()
+        )
+
+        return list(words_response.data or []), int(count_response.count or 0)
+
+    return await asyncio.to_thread(select_due_words)
+
+
+async def update_word_review(
+    word_id: str,
+    user_id: str,
+    rating: str,
+) -> dict[str, Any] | None:
+    def update_review() -> dict[str, Any] | None:
+        delay_days_by_rating = {
+            "again": 1,
+            "good": 3,
+            "easy": 7,
+        }
+        level_by_rating = {
+            "again": 0,
+            "good": 1,
+            "easy": 2,
+        }
+        delay_days = delay_days_by_rating[rating]
+        next_review_at = datetime.now(timezone.utc) + timedelta(days=delay_days)
+        reviewed_at = datetime.now(timezone.utc)
+
+        word_response = (
+            supabase.table("words")
+            .select("id, user_id, review_count")
+            .eq("id", word_id)
+            .eq("user_id", user_id)
+            .limit(1)
+            .execute()
+        )
+
+        if not word_response.data:
+            return None
+
+        current_word = word_response.data[0]
+        review_count = int(current_word.get("review_count") or 0) + 1
+        response = (
+            supabase.table("words")
+            .update(
+                {
+                    "next_review_at": next_review_at.isoformat(),
+                    "last_reviewed_at": reviewed_at.isoformat(),
+                    "review_count": review_count,
+                    "review_level": level_by_rating[rating],
+                }
+            )
+            .eq("id", word_id)
+            .eq("user_id", user_id)
+            .execute()
+        )
+
+        if not response.data:
+            return None
+
+        return dict(response.data[0])
+
+    return await asyncio.to_thread(update_review)
+
+
 async def get_user_stats(user_id: str) -> dict[str, Any]:
     def select_user_stats() -> dict[str, Any]:
         user_response = (

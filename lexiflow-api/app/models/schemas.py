@@ -55,6 +55,35 @@ class VocabularyListResponse(BaseModel):
     total: int
 
 
+class ReviewWordResponse(BaseModel):
+    id: str
+    original: str
+    translation: str
+    context_sentence: str = ""
+    document_name: str = ""
+    source_lang: str = ""
+    target_lang: str = ""
+    created_at: str
+    review_count: int = 0
+    review_level: int = 0
+
+
+class ReviewListResponse(BaseModel):
+    words: list[ReviewWordResponse]
+    total: int
+
+
+class ReviewUpdateRequest(BaseModel):
+    rating: str = Field(..., pattern="^(again|good|easy)$")
+
+
+class ReviewUpdateResponse(BaseModel):
+    id: str
+    next_review_at: str
+    review_count: int
+    review_level: int
+
+
 class UserResponse(BaseModel):
     id: str
     email: str

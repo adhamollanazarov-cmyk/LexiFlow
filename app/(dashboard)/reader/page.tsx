@@ -12,6 +12,7 @@ import {
 import { DOCXViewer } from "@/components/reader/DOCXViewer";
 import { PDFViewer } from "@/components/reader/PDFViewer";
 import { TranslationPopup } from "@/components/reader/TranslationPopup";
+import { trackEvent } from "@/lib/analytics";
 import { API_ROUTES } from "@/lib/api";
 import { createClient } from "@/lib/supabase/client";
 
@@ -173,6 +174,10 @@ export default function ReaderPage() {
   }
 
   useEffect(() => {
+    void trackEvent("reader_opened", { source: "reader" });
+  }, []);
+
+  useEffect(() => {
     async function fetchStreak() {
       try {
         const token = await getAccessToken();
@@ -282,6 +287,7 @@ export default function ReaderPage() {
       nextFile.type === "application/pdf" || fileName.endsWith(".pdf");
     const isDOCX =
       nextFile.type === DOCX_MIME_TYPE || fileName.endsWith(".docx");
+    const selectedFileType = isPDF ? "pdf" : isDOCX ? "docx" : "unknown";
 
     if (!isPDF && !isDOCX) {
       setSizeError("Only PDF and DOCX files allowed");
@@ -289,6 +295,11 @@ export default function ReaderPage() {
     }
 
     setPdfFile(nextFile);
+    void trackEvent("document_selected", {
+      fileType: selectedFileType,
+      fileSizeMb: Number((nextFile.size / (1024 * 1024)).toFixed(2)),
+      source: "reader",
+    });
     setFileError(null);
     setSizeError("");
   }
@@ -340,6 +351,10 @@ export default function ReaderPage() {
       const rect = range.getBoundingClientRect();
       const context = getSentenceContext(text);
 
+      void trackEvent("word_clicked", {
+        source: "reader",
+        wordLength: text.length,
+      });
       setSelectedText(text);
       setContextSentence(context);
       setPopupPosition({
@@ -364,6 +379,10 @@ export default function ReaderPage() {
     }
 
     setSelectedText(text);
+    void trackEvent("word_clicked", {
+      source: "reader",
+      wordLength: text.length,
+    });
     setContextSentence(getSentenceContext(text));
     setPopupPosition({
       x,
@@ -401,6 +420,10 @@ export default function ReaderPage() {
       }
 
       setSavedCount((previous) => previous + 1);
+      void trackEvent("vocabulary_saved", {
+        source: "reader",
+        success: true,
+      });
 
       const activityResponse = await fetch(API_ROUTES.userActivity, {
         method: "POST",

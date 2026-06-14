@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { trackEvent } from "@/lib/analytics";
 import { API_ROUTES } from "@/lib/api";
 import { createClient } from "@/lib/supabase/client";
 
@@ -180,6 +181,12 @@ export default function SettingsPage() {
       }
 
       setLanguageMessage("Language preferences saved.");
+      void trackEvent("settings_saved", {
+        documentLanguage: sourceLang,
+        source: "settings",
+        success: true,
+        translationLanguage: targetLang,
+      });
     } catch {
       setLanguageMessage("Could not save language preferences.");
     } finally {

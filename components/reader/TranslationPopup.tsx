@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useReader } from "@/context/ReaderContext";
+import { trackEvent } from "@/lib/analytics";
 import { API_ROUTES } from "@/lib/api";
 import { createClient } from "@/lib/supabase/client";
 
@@ -214,6 +215,12 @@ export function TranslationPopup({
         if (isActive) {
           setLanguagePreferences(preferences);
           setTranslation(data.translation);
+          void trackEvent("translation_used", {
+            documentLanguage: preferences.sourceLang,
+            source: "reader",
+            success: true,
+            translationLanguage: preferences.targetLang,
+          });
         }
       } catch {
         if (isActive) {
@@ -316,6 +323,12 @@ export function TranslationPopup({
       }
 
       setExplanation(data.explanation);
+      void trackEvent("ai_explain_used", {
+        documentLanguage: languagePreferences.sourceLang,
+        source: "reader",
+        success: true,
+        translationLanguage: languagePreferences.targetLang,
+      });
     } catch {
       setExplainError("AI explanation unavailable");
     } finally {

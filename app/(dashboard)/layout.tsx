@@ -7,9 +7,10 @@ import { ReaderProvider } from "@/context/ReaderContext";
 import { createClient } from "@/lib/supabase/client";
 
 const navLinks = [
-  { href: "/reader", label: "Reader", icon: "📄" },
-  { href: "/vocabulary", label: "Vocabulary", icon: "📚" },
-  { href: "/settings", label: "Settings", icon: "⚙️" },
+  { href: "/reader", label: "Reader", icon: "??" },
+  { href: "/vocabulary", label: "Vocabulary", icon: "??" },
+  { href: "/review", label: "Review", icon: "??" },
+  { href: "/settings", label: "Settings", icon: "??" },
 ];
 
 export default function DashboardLayout({
@@ -100,7 +101,7 @@ export default function DashboardLayout({
         </main>
 
         <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-slate-200 bg-white/95 px-3 py-2 backdrop-blur md:hidden">
-          <div className="mx-auto grid max-w-sm grid-cols-3 gap-2">
+          <div className="mx-auto grid max-w-md grid-cols-4 gap-2">
             {navLinks.map((link) => {
               const isActive = pathname === link.href;
 
@@ -126,3 +127,4 @@ export default function DashboardLayout({
     </ReaderProvider>
   );
 }
+

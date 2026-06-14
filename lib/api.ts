@@ -5,6 +5,8 @@ export const API_ROUTES = {
   detectLanguage: `${API_BASE}/api/detect-language`,
   explain: `${API_BASE}/api/explain`,
   vocabulary: `${API_BASE}/api/vocabulary`,
+  reviewDue: `${API_BASE}/api/review/due`,
+  reviewWord: (wordId: string) => `${API_BASE}/api/review/${wordId}`,
   userMe: `${API_BASE}/api/user/me`,
   userActivity: `${API_BASE}/api/user/activity`,
   userPreferences: `${API_BASE}/api/user/preferences`,
