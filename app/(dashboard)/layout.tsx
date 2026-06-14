@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { FeedbackButton } from "@/components/feedback/FeedbackButton";
 import { ReaderProvider } from "@/context/ReaderContext";
 import { createClient } from "@/lib/supabase/client";
 
@@ -99,6 +100,8 @@ export default function DashboardLayout({
         <main className="overflow-x-hidden px-4 py-6 sm:px-6 md:py-8">
           {children}
         </main>
+
+        <FeedbackButton />
 
         <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-slate-200 bg-white/95 px-3 py-2 backdrop-blur md:hidden">
           <div className="mx-auto grid max-w-md grid-cols-4 gap-2">
