@@ -4,6 +4,7 @@ import { useReader } from "@/context/ReaderContext";
 import {
   ChangeEvent,
   DragEvent,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -371,7 +372,7 @@ export default function ReaderPage() {
     };
   }, [pdfFile]);
 
-  function handleWordTap({ word, x, y }: WordTapPayload) {
+  const handleWordTap = useCallback(({ word, x, y }: WordTapPayload) => {
     const text = word.trim();
 
     if (text.length < 2 || text.length > 100) {
@@ -389,7 +390,7 @@ export default function ReaderPage() {
       y: y + window.scrollY + 8
     });
     setShowPopup(true);
-  }
+  }, []);
 
   async function handleSave(word: string, translation: string) {
     setSaveError("");

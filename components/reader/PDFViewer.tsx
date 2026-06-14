@@ -3,7 +3,9 @@
 import {
   MouseEvent,
   TouchEvent,
+  memo,
   useCallback,
+  useDeferredValue,
   useEffect,
   useMemo,
   useRef,
@@ -51,6 +53,12 @@ type StoredProgress = {
 type SearchMatch = {
   pageNumber: number;
   count: number;
+};
+
+type PDFPageViewProps = {
+  pageNumber: number;
+  pageWidth: number;
+  setPageRef: (pageNumber: number, element: HTMLDivElement | null) => void;
 };
 
 function clamp(value: number, min: number, max: number) {
@@ -193,6 +201,40 @@ async function createDocumentFingerprint(file: File) {
   }
 }
 
+const PDFPageView = memo(function PDFPageView({
+  pageNumber,
+  pageWidth,
+  setPageRef
+}: PDFPageViewProps) {
+  return (
+    <div
+      ref={(element) => {
+        setPageRef(pageNumber, element);
+      }}
+      data-page-number={pageNumber}
+      className="max-w-full overflow-x-auto rounded-md bg-white shadow-sm ring-1 ring-slate-200"
+    >
+      <Page
+        pageNumber={pageNumber}
+        width={pageWidth}
+        renderTextLayer={true}
+        renderAnnotationLayer={false}
+        loading={
+          <div
+            className="flex animate-pulse items-center justify-center rounded-md bg-slate-100 text-sm font-medium text-slate-400"
+            style={{
+              width: pageWidth,
+              height: Math.round(pageWidth * 1.3)
+            }}
+          >
+            Rendering page {pageNumber}...
+          </div>
+        }
+      />
+    </div>
+  );
+});
+
 export function PDFViewer({ file, onWordTap }: PDFViewerProps) {
   const [fileUrl, setFileUrl] = useState<string>("");
   const [numPages, setNumPages] = useState<number>(0);
@@ -208,25 +250,35 @@ export function PDFViewer({ file, onWordTap }: PDFViewerProps) {
   );
   const [extraPageNumbers, setExtraPageNumbers] = useState<number[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const deferredSearchQuery = useDeferredValue(searchQuery);
   const [searchMatches, setSearchMatches] = useState<SearchMatch[]>([]);
   const [activeSearchMatchIndex, setActiveSearchMatchIndex] = useState(0);
+  const [isSearching, setIsSearching] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [windowWidth, setWindowWidth] = useState(750);
   const pageRefs = useRef<Record<number, HTMLDivElement | null>>({});
   const lastTrackedPageRef = useRef(1);
+  const lastTrackedZoomRef = useRef(100);
 
   useEffect(() => {
     if (typeof window === "undefined") {
       return;
     }
 
+    let frameId = 0;
+
     function updateWindowWidth() {
-      setWindowWidth(window.innerWidth);
+      window.cancelAnimationFrame(frameId);
+      frameId = window.requestAnimationFrame(() => {
+        setWindowWidth(window.innerWidth);
+      });
     }
 
     updateWindowWidth();
     window.addEventListener("resize", updateWindowWidth);
 
     return () => {
+      window.cancelAnimationFrame(frameId);
       window.removeEventListener("resize", updateWindowWidth);
     };
   }, []);
@@ -249,8 +301,11 @@ export function PDFViewer({ file, onWordTap }: PDFViewerProps) {
     setSearchQuery("");
     setSearchMatches([]);
     setActiveSearchMatchIndex(0);
+    setIsSearching(false);
+    setIsLoadingMore(false);
     pageRefs.current = {};
     lastTrackedPageRef.current = 1;
+    lastTrackedZoomRef.current = 100;
 
     async function loadLocalProgress() {
       const fingerprint = await createDocumentFingerprint(file);
@@ -388,7 +443,9 @@ export function PDFViewer({ file, onWordTap }: PDFViewerProps) {
         );
 
         if (pageNumber) {
-          setCurrentPage(pageNumber);
+          setCurrentPage((currentPageNumber) =>
+            currentPageNumber === pageNumber ? currentPageNumber : pageNumber
+          );
         }
       },
       {
@@ -423,11 +480,12 @@ export function PDFViewer({ file, onWordTap }: PDFViewerProps) {
   }, [currentPage, numPages]);
 
   useEffect(() => {
-    const normalizedQuery = searchQuery.trim();
+    const normalizedQuery = deferredSearchQuery.trim();
 
     if (!normalizedQuery) {
       setSearchMatches([]);
       setActiveSearchMatchIndex(0);
+      setIsSearching(false);
       return;
     }
 
@@ -446,6 +504,7 @@ export function PDFViewer({ file, onWordTap }: PDFViewerProps) {
       const totalMatches = matches.reduce((total, match) => total + match.count, 0);
       setSearchMatches(matches);
       setActiveSearchMatchIndex(0);
+      setIsSearching(false);
 
       void trackEvent("reader_search_used", {
         matchCount: totalMatches,
@@ -453,12 +512,44 @@ export function PDFViewer({ file, onWordTap }: PDFViewerProps) {
         searchedLoadedPages: pagesToDisplay.length,
         source: "reader"
       });
-    }, 300);
+    }, 500);
 
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [pagesToDisplay, searchQuery]);
+  }, [deferredSearchQuery, pagesToDisplay]);
+
+  useEffect(() => {
+    if (lastTrackedZoomRef.current === zoom) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      lastTrackedZoomRef.current = zoom;
+      void trackEvent("reader_zoom_changed", {
+        source: "reader",
+        zoom
+      });
+    }, 600);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [zoom]);
+
+  useEffect(() => {
+    if (!isLoadingMore) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setIsLoadingMore(false);
+    }, 350);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [isLoadingMore, pagesToDisplay.length]);
 
   const hasMorePages = sequentialPagesToRender < numPages;
   const basePageWidth = Math.min(750, Math.max(320, windowWidth - 32));
@@ -468,15 +559,15 @@ export function PDFViewer({ file, onWordTap }: PDFViewerProps) {
     [searchMatches]
   );
 
-  function handleLoadSuccess({ numPages: loadedPages }: PDFLoadSuccess) {
+  const handleLoadSuccess = useCallback(({ numPages: loadedPages }: PDFLoadSuccess) => {
     setNumPages(loadedPages);
     setVisiblePageCount(Math.min(INITIAL_VISIBLE_PAGES, loadedPages));
     setHasError(false);
-  }
+  }, []);
 
-  function handleLoadError() {
+  const handleLoadError = useCallback(() => {
     setHasError(true);
-  }
+  }, []);
 
   const goToPage = useCallback(
     (pageNumber: number) => {
@@ -498,16 +589,13 @@ export function PDFViewer({ file, onWordTap }: PDFViewerProps) {
     [numPages, visiblePageCount]
   );
 
-  function updateZoom(nextZoom: number) {
+  const updateZoom = useCallback((nextZoom: number) => {
     const clampedZoom = clamp(nextZoom, MIN_ZOOM, MAX_ZOOM);
     setZoom(clampedZoom);
-    void trackEvent("reader_zoom_changed", {
-      source: "reader",
-      zoom: clampedZoom
-    });
-  }
+  }, []);
 
-  function handleLoadMorePages() {
+  const handleLoadMorePages = useCallback(() => {
+    setIsLoadingMore(true);
     setVisiblePageCount((currentCount) =>
       Math.min(currentCount + PAGES_PER_BATCH, numPages)
     );
@@ -516,9 +604,9 @@ export function PDFViewer({ file, onWordTap }: PDFViewerProps) {
       source: "reader",
       totalPages: numPages
     });
-  }
+  }, [numPages, pagesToDisplay.length]);
 
-  function goToSearchMatch(direction: "next" | "previous") {
+  const goToSearchMatch = useCallback((direction: "next" | "previous") => {
     if (searchMatches.length === 0) {
       return;
     }
@@ -531,7 +619,14 @@ export function PDFViewer({ file, onWordTap }: PDFViewerProps) {
 
     setActiveSearchMatchIndex(nextIndex);
     goToPage(searchMatches[nextIndex].pageNumber);
-  }
+  }, [activeSearchMatchIndex, goToPage, searchMatches]);
+
+  const setPageRef = useCallback(
+    (pageNumber: number, element: HTMLDivElement | null) => {
+      pageRefs.current[pageNumber] = element;
+    },
+    []
+  );
 
   function handleWordTapAtPoint(x: number, y: number) {
     const wordRange = getWordRangeFromPoint(x, y);
@@ -649,7 +744,10 @@ export function PDFViewer({ file, onWordTap }: PDFViewerProps) {
           <input
             type="search"
             value={searchQuery}
-            onChange={(event) => setSearchQuery(event.target.value)}
+            onChange={(event) => {
+              setSearchQuery(event.target.value);
+              setIsSearching(Boolean(event.target.value.trim()));
+            }}
             placeholder="Search loaded pages..."
             className="min-h-11 flex-1 rounded-lg border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#4F6EF7] focus:ring-4 focus:ring-blue-100"
           />
@@ -682,7 +780,7 @@ export function PDFViewer({ file, onWordTap }: PDFViewerProps) {
           ) : null}
           {searchQuery.trim() ? (
             <span>
-              {totalSearchMatches} matches in loaded pages
+              {isSearching ? "Searching loaded pages..." : `${totalSearchMatches} matches in loaded pages`}
               {searchMatches.length > 0
                 ? `, page ${searchMatches[activeSearchMatchIndex]?.pageNumber}`
                 : ""}
@@ -719,21 +817,12 @@ export function PDFViewer({ file, onWordTap }: PDFViewerProps) {
           <div className="flex max-w-full flex-col items-center gap-6 px-1">
             {pagesToDisplay.map((pageNumber) => {
               return (
-                <div
+                <PDFPageView
                   key={`page-${pageNumber}`}
-                  ref={(element) => {
-                    pageRefs.current[pageNumber] = element;
-                  }}
-                  data-page-number={pageNumber}
-                  className="max-w-full overflow-x-auto rounded-md bg-white shadow-sm ring-1 ring-slate-200"
-                >
-                  <Page
-                    pageNumber={pageNumber}
-                    width={pageWidth}
-                    renderTextLayer={true}
-                    renderAnnotationLayer={false}
-                  />
-                </div>
+                  pageNumber={pageNumber}
+                  pageWidth={pageWidth}
+                  setPageRef={setPageRef}
+                />
               );
             })}
 
@@ -741,9 +830,10 @@ export function PDFViewer({ file, onWordTap }: PDFViewerProps) {
               <button
                 type="button"
                 onClick={handleLoadMorePages}
-                className="min-h-11 rounded-lg bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+                disabled={isLoadingMore}
+                className="min-h-11 rounded-lg bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Load more pages
+                {isLoadingMore ? "Loading more pages..." : "Load more pages"}
               </button>
             ) : null}
           </div>
