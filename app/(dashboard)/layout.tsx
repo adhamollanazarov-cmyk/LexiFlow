@@ -7,12 +7,65 @@ import { FeedbackButton } from "@/components/feedback/FeedbackButton";
 import { ReaderProvider } from "@/context/ReaderContext";
 import { createClient } from "@/lib/supabase/client";
 
+type NavIconName = "reader" | "vocabulary" | "review" | "settings";
+
 const navLinks = [
-  { href: "/reader", label: "Reader", icon: "??" },
-  { href: "/vocabulary", label: "Vocabulary", icon: "??" },
-  { href: "/review", label: "Review", icon: "??" },
-  { href: "/settings", label: "Settings", icon: "??" },
+  { href: "/reader", label: "Reader", icon: "reader" },
+  { href: "/vocabulary", label: "Vocabulary", icon: "vocabulary" },
+  { href: "/review", label: "Review", icon: "review" },
+  { href: "/settings", label: "Settings", icon: "settings" },
 ];
+
+function NavIcon({ name }: { name: NavIconName }) {
+  const commonProps = {
+    className: "h-5 w-5",
+    fill: "none",
+    stroke: "currentColor",
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    strokeWidth: 2,
+    viewBox: "0 0 24 24",
+    "aria-hidden": true,
+  };
+
+  if (name === "reader") {
+    return (
+      <svg {...commonProps}>
+        <path d="M12 7v14" />
+        <path d="M4 5.5A3.5 3.5 0 0 1 7.5 2H12v19H7.5A3.5 3.5 0 0 0 4 17.5v-12Z" />
+        <path d="M20 5.5A3.5 3.5 0 0 0 16.5 2H12v19h4.5a3.5 3.5 0 0 1 3.5-3.5v-12Z" />
+      </svg>
+    );
+  }
+
+  if (name === "vocabulary") {
+    return (
+      <svg {...commonProps}>
+        <path d="M4 6h16" />
+        <path d="M4 12h16" />
+        <path d="M4 18h10" />
+      </svg>
+    );
+  }
+
+  if (name === "review") {
+    return (
+      <svg {...commonProps}>
+        <path d="M3 12a9 9 0 0 1 15.3-6.4" />
+        <path d="M18 3v5h-5" />
+        <path d="M21 12a9 9 0 0 1-15.3 6.4" />
+        <path d="M6 21v-5h5" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg {...commonProps}>
+      <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" />
+      <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1A2 2 0 1 1 4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.6-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7A2 2 0 1 1 7 4.2l.1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.6V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1A2 2 0 1 1 19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.1a2 2 0 1 1 0 4H21a1.7 1.7 0 0 0-1.6 1Z" />
+    </svg>
+  );
+}
 
 export default function DashboardLayout({
   children,
@@ -119,7 +172,7 @@ export default function DashboardLayout({
                       : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
                   }`}
                 >
-                  <span className="text-base leading-none">{link.icon}</span>
+                  <NavIcon name={link.icon as NavIconName} />
                   <span className="mt-1">{link.label}</span>
                 </Link>
               );

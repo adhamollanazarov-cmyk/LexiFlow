@@ -255,7 +255,8 @@ export function PDFViewer({ file, onWordTap }: PDFViewerProps) {
   const [activeSearchMatchIndex, setActiveSearchMatchIndex] = useState(0);
   const [isSearching, setIsSearching] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [windowWidth, setWindowWidth] = useState(750);
+  const [viewerWidth, setViewerWidth] = useState(750);
+  const viewerContainerRef = useRef<HTMLDivElement | null>(null);
   const pageRefs = useRef<Record<number, HTMLDivElement | null>>({});
   const lastTrackedPageRef = useRef(1);
   const lastTrackedZoomRef = useRef(100);
@@ -267,19 +268,21 @@ export function PDFViewer({ file, onWordTap }: PDFViewerProps) {
 
     let frameId = 0;
 
-    function updateWindowWidth() {
+    function updateViewerWidth() {
       window.cancelAnimationFrame(frameId);
       frameId = window.requestAnimationFrame(() => {
-        setWindowWidth(window.innerWidth);
+        const measuredWidth =
+          viewerContainerRef.current?.clientWidth || window.innerWidth;
+        setViewerWidth(measuredWidth);
       });
     }
 
-    updateWindowWidth();
-    window.addEventListener("resize", updateWindowWidth);
+    updateViewerWidth();
+    window.addEventListener("resize", updateViewerWidth);
 
     return () => {
       window.cancelAnimationFrame(frameId);
-      window.removeEventListener("resize", updateWindowWidth);
+      window.removeEventListener("resize", updateViewerWidth);
     };
   }, []);
 
@@ -552,7 +555,10 @@ export function PDFViewer({ file, onWordTap }: PDFViewerProps) {
   }, [isLoadingMore, pagesToDisplay.length]);
 
   const hasMorePages = sequentialPagesToRender < numPages;
-  const basePageWidth = Math.min(750, Math.max(320, windowWidth - 32));
+  const isMobileViewer = viewerWidth < 768;
+  const basePageWidth = isMobileViewer
+    ? Math.max(280, viewerWidth - 8)
+    : Math.min(750, Math.max(320, viewerWidth - 32));
   const pageWidth = Math.round(basePageWidth * (zoom / 100));
   const totalSearchMatches = useMemo(
     () => searchMatches.reduce((total, match) => total + match.count, 0),
@@ -681,41 +687,39 @@ export function PDFViewer({ file, onWordTap }: PDFViewerProps) {
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-4">
-      <div className="sticky top-[74px] z-30 rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-sm backdrop-blur md:top-[76px] md:p-4">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex flex-wrap items-center gap-2">
+      <div className="sticky top-[68px] z-30 rounded-xl border border-slate-200 bg-white/95 p-2 shadow-sm backdrop-blur md:top-[76px] md:rounded-2xl md:p-4">
+        <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 md:flex-wrap md:overflow-visible md:pb-0">
             <button
               type="button"
               onClick={() => goToPage(currentPage - 1)}
               disabled={currentPage <= 1}
-              className="min-h-11 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+              className="min-h-11 shrink-0 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
             >
               Prev
             </button>
-            <span className="min-h-11 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-semibold text-slate-700">
+            <span className="min-h-11 shrink-0 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-semibold text-slate-700">
               Page {currentPage} / {numPages || "-"}
             </span>
             <button
               type="button"
               onClick={() => goToPage(currentPage + 1)}
               disabled={!numPages || currentPage >= numPages}
-              className="min-h-11 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+              className="min-h-11 shrink-0 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
             >
               Next
             </button>
-          </div>
 
-          <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={() => updateZoom(zoom - ZOOM_STEP)}
               disabled={zoom <= MIN_ZOOM}
-              className="min-h-11 min-w-11 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+              className="min-h-11 min-w-11 shrink-0 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
               aria-label="Zoom out"
             >
               -
             </button>
-            <label className="flex min-h-11 flex-1 items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-700 sm:flex-none">
+            <label className="flex min-h-11 w-24 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-700 sm:w-auto sm:gap-3">
               <span>{zoom}%</span>
               <input
                 type="range"
@@ -724,7 +728,7 @@ export function PDFViewer({ file, onWordTap }: PDFViewerProps) {
                 step={ZOOM_STEP}
                 value={zoom}
                 onChange={(event) => updateZoom(Number(event.target.value))}
-                className="w-full accent-[#4F6EF7] sm:w-36"
+                className="hidden accent-[#4F6EF7] sm:block sm:w-36"
                 aria-label="PDF zoom"
               />
             </label>
@@ -732,15 +736,26 @@ export function PDFViewer({ file, onWordTap }: PDFViewerProps) {
               type="button"
               onClick={() => updateZoom(zoom + ZOOM_STEP)}
               disabled={zoom >= MAX_ZOOM}
-              className="min-h-11 min-w-11 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+              className="min-h-11 min-w-11 shrink-0 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
               aria-label="Zoom in"
             >
               +
             </button>
+
+            {hasMorePages ? (
+              <button
+                type="button"
+                onClick={handleLoadMorePages}
+                disabled={isLoadingMore}
+                className="min-h-11 shrink-0 rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 md:hidden"
+              >
+                {isLoadingMore ? "Loading..." : "Load more"}
+              </button>
+            ) : null}
           </div>
         </div>
 
-        <div className="mt-3 flex flex-col gap-2 md:flex-row md:items-center">
+        <div className="mt-2 flex flex-col gap-2 md:mt-3 md:flex-row md:items-center">
           <input
             type="search"
             value={searchQuery}
@@ -774,8 +789,15 @@ export function PDFViewer({ file, onWordTap }: PDFViewerProps) {
         <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-500">
           {numPages > 0 ? (
             <span>
-              Showing {pagesToDisplay.length} loaded of {numPages} pages. More
-              pages load only when you ask for them.
+              <span className="md:hidden">
+                {pagesToDisplay.length} / {numPages} pages loaded
+              </span>
+              <span className="hidden md:inline">
+                Showing {pagesToDisplay.length} loaded of {numPages} pages
+                {hasMorePages
+                  ? ". More pages load only when you ask for them."
+                  : "."}
+              </span>
             </span>
           ) : null}
           {searchQuery.trim() ? (
@@ -795,9 +817,10 @@ export function PDFViewer({ file, onWordTap }: PDFViewerProps) {
       </div>
 
       <div
+        ref={viewerContainerRef}
         onClick={handleClick}
         onTouchEnd={handleTouchEnd}
-        className="flex max-w-full select-none justify-center overflow-x-auto [-webkit-touch-callout:none] [-webkit-user-select:none] md:select-text md:[-webkit-user-select:text]"
+        className="flex w-full max-w-full select-none justify-center overflow-x-auto [-webkit-touch-callout:none] [-webkit-user-select:none] md:select-text md:[-webkit-user-select:text]"
       >
         <Document
           file={fileUrl}
@@ -831,7 +854,7 @@ export function PDFViewer({ file, onWordTap }: PDFViewerProps) {
                 type="button"
                 onClick={handleLoadMorePages}
                 disabled={isLoadingMore}
-                className="min-h-11 rounded-lg bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                className="hidden min-h-11 rounded-lg bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 md:inline-flex md:items-center"
               >
                 {isLoadingMore ? "Loading more pages..." : "Load more pages"}
               </button>

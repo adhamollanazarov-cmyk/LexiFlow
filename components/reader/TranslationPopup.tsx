@@ -59,6 +59,16 @@ const LANGUAGE_NAME_BY_CODE: Record<string, string> = {
   UZ: "Uzbek",
   TR: "Turkish"
 };
+const TRANSLATION_ERROR_MESSAGE =
+  "Couldn't translate this word. Try again, use AI Explain, or check your target language in Settings.";
+const INVALID_SELECTION_MESSAGE =
+  "Couldn't find a word to translate. Try selecting a word without punctuation.";
+const SURROUNDING_PUNCTUATION_PATTERN =
+  /^[\s.,?!:;"'“”‘’()[\]{}]+|[\s.,?!:;"'“”‘’()[\]{}]+$/g;
+
+function cleanSelectedWord(value: string) {
+  return value.trim().replace(SURROUNDING_PUNCTUATION_PATTERN, "").trim();
+}
 
 function getLanguageName(code: string) {
   return LANGUAGE_NAME_BY_CODE[code.toUpperCase()] ?? code.toUpperCase();
@@ -115,6 +125,8 @@ export function TranslationPopup({
 }: TranslationPopupProps) {
   const { detectedSourceLang } = useReader();
   const popupRef = useRef<HTMLDivElement | null>(null);
+  const translationRequestIdRef = useRef(0);
+  const isTranslationRequestInFlightRef = useRef(false);
   const [activeTab, setActiveTab] = useState<ActiveTab>("translation");
   const [translation, setTranslation] = useState<string | null>(null);
   const [translationMode, setTranslationMode] =
@@ -131,6 +143,10 @@ export function TranslationPopup({
       sourceLang: "EN-US",
       targetLang: "RU"
     });
+  const cleanedSelectedText = useMemo(
+    () => cleanSelectedWord(selectedText),
+    [selectedText]
+  );
 
   const popupPosition = useMemo(() => {
     if (typeof window === "undefined") {
@@ -178,87 +194,111 @@ export function TranslationPopup({
     };
   }
 
-  useEffect(() => {
-    let isActive = true;
-
-    async function fetchTranslation() {
-      setActiveTab("translation");
-      setIsLoading(true);
-      setTranslation(null);
-      setTranslationMode("translation");
-      setIsSaved(false);
-      setErrorMessage("");
-      setExplanation(null);
-      setIsLoadingExplain(false);
-      setExplainError("");
-
-      try {
-        const token = await getAccessToken();
-
-        if (!token) {
-          throw new Error("Missing session token");
-        }
-
-        const preferences = await getLanguagePreferences(token);
-
-        const response = await fetch(API_ROUTES.translate, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            text: selectedText,
-            source_lang: preferences.sourceLang,
-            target_lang: preferences.targetLang,
-            context: contextSentence
-          })
-        });
-
-        if (!response.ok) {
-          throw new Error("Translation request failed");
-        }
-
-        const data = (await response.json()) as TranslateResponse | null;
-
-        if (!data?.translation) {
-          throw new Error("Translation response was empty");
-        }
-
-        if (isActive) {
-          const nextMode =
-            data.mode === "meaning" ||
-            isSameLanguage(preferences.sourceLang, preferences.targetLang)
-              ? "meaning"
-              : "translation";
-          setLanguagePreferences(preferences);
-          setTranslation(data.translation);
-          setTranslationMode(nextMode);
-          void trackEvent("translation_used", {
-            documentLanguage: preferences.sourceLang,
-            mode: nextMode,
-            source: "reader",
-            success: true,
-            translationLanguage: preferences.targetLang,
-          });
-        }
-      } catch {
-        if (isActive) {
-          setErrorMessage("Translation unavailable");
-        }
-      } finally {
-        if (isActive) {
-          setIsLoading(false);
-        }
-      }
+  async function fetchTranslation({ restart = false } = {}) {
+    if (isTranslationRequestInFlightRef.current && !restart) {
+      return;
     }
 
-    fetchTranslation();
+    if (!cleanedSelectedText) {
+      setActiveTab("translation");
+      setTranslation(null);
+      setIsLoading(false);
+      setIsSaved(false);
+      setErrorMessage(INVALID_SELECTION_MESSAGE);
+      return;
+    }
+
+    const requestId = translationRequestIdRef.current + 1;
+    translationRequestIdRef.current = requestId;
+    isTranslationRequestInFlightRef.current = true;
+    setActiveTab("translation");
+    setIsLoading(true);
+    setTranslation(null);
+    setTranslationMode("translation");
+    setIsSaved(false);
+    setErrorMessage("");
+    setExplanation(null);
+    setIsLoadingExplain(false);
+    setExplainError("");
+
+    try {
+      const token = await getAccessToken();
+
+      if (!token) {
+        throw new Error("Missing session token");
+      }
+
+      const preferences = await getLanguagePreferences(token);
+
+      const response = await fetch(API_ROUTES.translate, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          text: cleanedSelectedText,
+          source_lang: preferences.sourceLang,
+          target_lang: preferences.targetLang,
+          context: contextSentence
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Translation request failed with ${response.status}`);
+      }
+
+      const data = (await response.json()) as TranslateResponse | null;
+
+      if (!data?.translation) {
+        throw new Error("Translation response was empty");
+      }
+
+      const nextMode =
+        data.mode === "meaning" ||
+        isSameLanguage(preferences.sourceLang, preferences.targetLang)
+          ? "meaning"
+          : "translation";
+
+      if (translationRequestIdRef.current !== requestId) {
+        return;
+      }
+
+      setLanguagePreferences(preferences);
+      setTranslation(data.translation);
+      setTranslationMode(nextMode);
+      void trackEvent("translation_used", {
+        documentLanguage: preferences.sourceLang,
+        mode: nextMode,
+        source: "reader",
+        success: true,
+        translationLanguage: preferences.targetLang,
+      });
+    } catch (error) {
+      if (translationRequestIdRef.current !== requestId) {
+        return;
+      }
+
+      if (process.env.NODE_ENV === "development") {
+        console.warn("Translation failed:", error);
+      }
+      setErrorMessage(TRANSLATION_ERROR_MESSAGE);
+    } finally {
+      if (translationRequestIdRef.current === requestId) {
+        setIsLoading(false);
+        isTranslationRequestInFlightRef.current = false;
+      }
+    }
+  }
+
+  useEffect(() => {
+    fetchTranslation({ restart: true });
 
     return () => {
-      isActive = false;
+      translationRequestIdRef.current += 1;
+      isTranslationRequestInFlightRef.current = false;
     };
-  }, [contextSentence, selectedText]);
+  }, [cleanedSelectedText, contextSentence, selectedText]);
 
   useEffect(() => {
     if (!popupRef.current) {
@@ -305,6 +345,11 @@ export function TranslationPopup({
       return;
     }
 
+    if (!cleanedSelectedText) {
+      setExplainError(INVALID_SELECTION_MESSAGE);
+      return;
+    }
+
     setIsLoadingExplain(true);
     setExplainError("");
 
@@ -322,7 +367,7 @@ export function TranslationPopup({
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          word: selectedText,
+          word: cleanedSelectedText,
           sentence: contextSentence,
           target_lang: languagePreferences.targetLang,
           ui_language:
@@ -365,14 +410,14 @@ export function TranslationPopup({
   }
 
   async function handleSave() {
-    if (!translation) {
+    if (!translation || !cleanedSelectedText) {
       return;
     }
 
     setIsSaving(true);
 
     try {
-      await onSave(selectedText, translation);
+      await onSave(cleanedSelectedText, translation);
       setIsSaved(true);
     } catch {
       setErrorMessage("Could not save word");
@@ -384,9 +429,9 @@ export function TranslationPopup({
   return (
     <div
       ref={popupRef}
-      className="fixed inset-x-0 bottom-0 z-50 max-h-[60vh] overflow-y-auto rounded-t-2xl bg-white p-4 shadow-2xl ring-1 ring-slate-200 md:inset-x-auto md:bottom-auto md:w-[min(320px,calc(100vw-32px))] md:rounded-md md:shadow-xl"
+      className="fixed inset-x-0 bottom-0 z-50 max-h-[50vh] overflow-y-auto rounded-t-2xl bg-white p-3 shadow-2xl ring-1 ring-slate-200 sm:p-4 md:inset-x-auto md:bottom-auto md:max-h-[min(70vh,520px)] md:w-[min(320px,calc(100vw-32px))] md:rounded-md md:shadow-xl"
     >
-      <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-slate-200 md:hidden" />
+      <div className="mx-auto mb-2 h-1.5 w-12 rounded-full bg-slate-200 md:hidden" />
       <button
         type="button"
         onClick={onClose}
@@ -400,7 +445,7 @@ export function TranslationPopup({
         {selectedText}
       </p>
 
-      <div className="mt-4 grid grid-cols-2 gap-2">
+      <div className="mt-3 grid grid-cols-2 gap-2">
         <button
           type="button"
           onClick={() => handleTabChange("translation")}
@@ -425,7 +470,7 @@ export function TranslationPopup({
         </button>
       </div>
 
-      <div className="mt-4 min-h-24">
+      <div className="mt-3 min-h-16">
         {activeTab === "translation" ? (
           <>
             {isLoading ? (
@@ -452,7 +497,19 @@ export function TranslationPopup({
             ) : null}
 
             {!isLoading && errorMessage ? (
-              <p className="text-sm text-red-600">{errorMessage}</p>
+              <div className="rounded-xl border border-red-100 bg-red-50 p-3">
+                <p className="text-sm leading-6 text-red-700">
+                  {errorMessage}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => fetchTranslation()}
+                  disabled={isLoading}
+                  className="mt-3 min-h-11 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-red-700 ring-1 ring-red-100 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  Try again
+                </button>
+              </div>
             ) : null}
           </>
         ) : (
@@ -479,7 +536,7 @@ export function TranslationPopup({
         type="button"
         onClick={handleSave}
         disabled={!translation || isSaved || isSaving}
-        className="mt-4 min-h-12 w-full rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+        className="mt-3 min-h-12 w-full rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {isSaving ? "Saving..." : isSaved ? "Saved" : "Save"}
       </button>
