@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useReader } from "@/context/ReaderContext";
 import { trackEvent } from "@/lib/analytics";
 import { API_ROUTES } from "@/lib/api";
 import { createClient } from "@/lib/supabase/client";
@@ -52,6 +53,12 @@ async function getAuthToken(): Promise<string | null> {
 }
 
 export default function SettingsPage() {
+  const {
+    detectedSourceLang,
+    languageSource,
+    resetLanguageDetection,
+    setManualSourceLang,
+  } = useReader();
   const router = useRouter();
   const [isConnected, setIsConnected] = useState(false);
   const [chatId, setChatId] = useState<number | null>(null);
@@ -64,6 +71,12 @@ export default function SettingsPage() {
   const [telegramMessage, setTelegramMessage] = useState("");
   const [sourceLang, setSourceLang] = useState("EN-US");
   const [targetLang, setTargetLang] = useState("RU");
+
+  useEffect(() => {
+    if (languageSource === "auto" && detectedSourceLang) {
+      setSourceLang(detectedSourceLang);
+    }
+  }, [detectedSourceLang, languageSource]);
 
   useEffect(() => {
     async function fetchStatus() {
@@ -181,6 +194,7 @@ export default function SettingsPage() {
       }
 
       setLanguageMessage("Language preferences saved.");
+      setManualSourceLang(sourceLang);
       void trackEvent("settings_saved", {
         documentLanguage: sourceLang,
         source: "settings",
@@ -192,6 +206,23 @@ export default function SettingsPage() {
     } finally {
       setIsSavingLanguages(false);
     }
+  }
+
+  function handleSourceLanguageChange(value: string) {
+    setSourceLang(value);
+    setManualSourceLang(value);
+  }
+
+  function getLanguageStatusLabel() {
+    if (languageSource === "manual") {
+      return "Manually selected";
+    }
+
+    if (languageSource === "auto") {
+      return "Detected from your document.";
+    }
+
+    return "Could not detect language. Please choose manually.";
   }
 
   async function handleSendTest() {
@@ -252,12 +283,14 @@ export default function SettingsPage() {
                   Document Language
                 </span>
                 <span className="rounded-full bg-slate-100 px-2.5 py-1 text-sm font-semibold text-slate-500">
-                  Auto-detected
+                  {getLanguageStatusLabel()}
                 </span>
               </div>
               <select
                 value={sourceLang}
-                onChange={(event) => setSourceLang(event.target.value)}
+                onChange={(event) =>
+                  handleSourceLanguageChange(event.target.value)
+                }
                 className="min-h-12 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-[#4F6EF7] focus:ring-2 focus:ring-blue-100"
               >
                 {sourceLanguageOptions.map((option) => (
@@ -266,6 +299,15 @@ export default function SettingsPage() {
                   </option>
                 ))}
               </select>
+              {languageSource !== "auto" ? (
+                <button
+                  type="button"
+                  onClick={resetLanguageDetection}
+                  className="mt-2 text-sm font-semibold text-[#4F6EF7] transition hover:text-indigo-600"
+                >
+                  Reset to auto-detect
+                </button>
+              ) : null}
             </label>
 
             <label className="block">

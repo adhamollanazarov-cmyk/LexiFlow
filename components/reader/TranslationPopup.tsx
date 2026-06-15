@@ -70,12 +70,19 @@ function cleanSelectedWord(value: string) {
   return value.trim().replace(SURROUNDING_PUNCTUATION_PATTERN, "").trim();
 }
 
+const MAX_TRANSLATION_CONTEXT_LENGTH = 300;
+
 function getLanguageName(code: string) {
   return LANGUAGE_NAME_BY_CODE[code.toUpperCase()] ?? code.toUpperCase();
 }
 
 function isSameLanguage(sourceLang: string, targetLang: string) {
   return getLanguageName(sourceLang) === getLanguageName(targetLang);
+}
+
+function normalizeLanguageCode(value: string, fallback: string) {
+  const normalized = value.trim().toUpperCase();
+  return normalized || fallback;
 }
 
 function parseExplanationResponse(response: string): ParsedExplanation {
@@ -123,7 +130,7 @@ export function TranslationPopup({
   onClose,
   onSave
 }: TranslationPopupProps) {
-  const { detectedSourceLang } = useReader();
+  const { detectedSourceLang, languageSource } = useReader();
   const popupRef = useRef<HTMLDivElement | null>(null);
   const translationRequestIdRef = useRef(0);
   const isTranslationRequestInFlightRef = useRef(false);
@@ -189,8 +196,8 @@ export function TranslationPopup({
     const data = (await response.json()) as UserPreferencesResponse | null;
 
     return {
-      sourceLang: data?.source_lang || "EN-US",
-      targetLang: data?.target_lang || "RU"
+      sourceLang: normalizeLanguageCode(data?.source_lang || "", "EN-US"),
+      targetLang: normalizeLanguageCode(data?.target_lang || "", "RU")
     };
   }
 
@@ -228,7 +235,21 @@ export function TranslationPopup({
         throw new Error("Missing session token");
       }
 
-      const preferences = await getLanguagePreferences(token);
+      const savedPreferences = await getLanguagePreferences(token);
+      const preferences = {
+        ...savedPreferences,
+        sourceLang:
+          languageSource === "auto" && detectedSourceLang
+            ? normalizeLanguageCode(
+                detectedSourceLang,
+                savedPreferences.sourceLang
+              )
+            : savedPreferences.sourceLang,
+      };
+      const shortContext = contextSentence.slice(
+        0,
+        MAX_TRANSLATION_CONTEXT_LENGTH
+      );
 
       const response = await fetch(API_ROUTES.translate, {
         method: "POST",
@@ -240,11 +261,22 @@ export function TranslationPopup({
           text: cleanedSelectedText,
           source_lang: preferences.sourceLang,
           target_lang: preferences.targetLang,
-          context: contextSentence
+          context: shortContext
         })
       });
 
       if (!response.ok) {
+        if (process.env.NODE_ENV === "development") {
+          const responseText = await response.text();
+          console.warn("Translation request failed:", {
+            endpoint: "/api/translate",
+            hasText: Boolean(cleanedSelectedText),
+            response: responseText,
+            source_lang: preferences.sourceLang,
+            status: response.status,
+            target_lang: preferences.targetLang,
+          });
+        }
         throw new Error(`Translation request failed with ${response.status}`);
       }
 
@@ -298,7 +330,13 @@ export function TranslationPopup({
       translationRequestIdRef.current += 1;
       isTranslationRequestInFlightRef.current = false;
     };
-  }, [cleanedSelectedText, contextSentence, selectedText]);
+  }, [
+    cleanedSelectedText,
+    contextSentence,
+    detectedSourceLang,
+    languageSource,
+    selectedText,
+  ]);
 
   useEffect(() => {
     if (!popupRef.current) {

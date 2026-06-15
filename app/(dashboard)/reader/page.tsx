@@ -37,6 +37,107 @@ type WordTapPayload = {
   y: number;
 };
 
+type LanguageDetectionResult = {
+  lang: string | null;
+  confidence: number;
+};
+
+const MIN_DETECTION_TEXT_LENGTH = 120;
+const DETECTION_SAMPLE_LENGTH = 1500;
+
+const LANGUAGE_HINTS: Record<string, string[]> = {
+  DE: [
+    "der",
+    "die",
+    "das",
+    "und",
+    "ist",
+    "nicht",
+    "warum",
+    "welche",
+    "haben",
+    "können",
+    "koennen",
+    "mögen",
+    "moegen",
+    "bücher",
+    "buecher",
+    "geld",
+    "ein",
+    "eine",
+    "mit",
+    "für",
+    "fuer",
+    "auch",
+    "sich",
+  ],
+  "EN-US": [
+    "the",
+    "and",
+    "is",
+    "are",
+    "not",
+    "why",
+    "which",
+    "have",
+    "can",
+    "with",
+    "for",
+    "this",
+    "that",
+    "from",
+    "students",
+  ],
+  RU: ["и", "в", "не", "что", "на", "это", "как", "для", "вы", "он", "она"],
+  ES: ["el", "la", "los", "las", "y", "es", "que", "para", "con", "una"],
+  FR: ["le", "la", "les", "et", "est", "que", "pour", "avec", "une", "des"],
+  TR: ["ve", "bir", "bu", "için", "ile", "de", "da", "olan", "olarak"],
+  UZ: ["va", "bu", "uchun", "bilan", "emas", "ham", "bir", "bo'lgan"],
+};
+
+function extractDocumentText(container: HTMLDivElement | null) {
+  if (!container) {
+    return "";
+  }
+
+  const textContainers = container.querySelectorAll(
+    ".react-pdf__Page__textContent, .prose"
+  );
+  const text = Array.from(textContainers)
+    .map((element) => element.textContent ?? "")
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return text.slice(0, DETECTION_SAMPLE_LENGTH);
+}
+
+function detectLanguageLocally(text: string): LanguageDetectionResult {
+  const normalized = text.toLowerCase();
+  const words = normalized.match(/[\p{L}']+/gu) ?? [];
+
+  if (words.length < 20) {
+    return { lang: null, confidence: 0 };
+  }
+
+  const wordSet = new Set(words);
+  const scores = Object.entries(LANGUAGE_HINTS).map(([lang, hints]) => {
+    const score = hints.reduce(
+      (total, hint) => total + (wordSet.has(hint) ? 1 : 0),
+      0
+    );
+    return { lang, score };
+  });
+  scores.sort((left, right) => right.score - left.score);
+
+  const [best, second] = scores;
+  if (!best || best.score < 2 || best.score - (second?.score ?? 0) < 1) {
+    return { lang: null, confidence: best?.score ?? 0 };
+  }
+
+  return { lang: best.lang, confidence: best.score };
+}
+
 function truncateFilename(filename: string) {
   if (filename.length <= 30) {
     return filename;
@@ -129,7 +230,14 @@ function BookmarkIcon() {
 }
 
 export default function ReaderPage() {
-  const { pdfFile, pdfName, setDetectedSourceLang, setPdfFile } = useReader();
+  const {
+    autoDetectRequestId,
+    languageSource,
+    pdfFile,
+    pdfName,
+    setDetectedSourceLang,
+    setPdfFile,
+  } = useReader();
   const documentContentRef = useRef<HTMLDivElement | null>(null);
   const [selectedText, setSelectedText] = useState("");
   const [contextSentence, setContextSentence] = useState("");
@@ -215,48 +323,31 @@ export default function ReaderPage() {
     let isActive = true;
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
-    async function detectRenderedLanguage(attempt = 0) {
-      const text = documentContentRef.current?.innerText.trim() ?? "";
-      const textSample = text.slice(0, 500);
+    function detectRenderedLanguage(attempt = 0) {
+      if (languageSource === "manual") {
+        return;
+      }
 
-      if (textSample.length < 20 && attempt < 6) {
+      const textSample = extractDocumentText(documentContentRef.current);
+
+      if (textSample.length < MIN_DETECTION_TEXT_LENGTH && attempt < 10) {
         timeoutId = setTimeout(() => {
           detectRenderedLanguage(attempt + 1);
         }, 600);
         return;
       }
 
-      if (textSample.length < 20) {
+      if (textSample.length < MIN_DETECTION_TEXT_LENGTH) {
+        if (isActive) {
+          setDetectedSourceLang(null);
+        }
         return;
       }
 
-      try {
-        const token = await getAccessToken();
+      const detection = detectLanguageLocally(textSample);
 
-        if (!token) {
-          return;
-        }
-
-        const response = await fetch(API_ROUTES.detectLanguage, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ text: textSample })
-        });
-
-        if (!response.ok) {
-          return;
-        }
-
-        const data = (await response.json()) as { detected_lang?: string } | null;
-
-        if (isActive && data?.detected_lang) {
-          setDetectedSourceLang(data.detected_lang);
-        }
-      } catch {
-        return;
+      if (isActive) {
+        setDetectedSourceLang(detection.lang);
       }
     }
 
@@ -270,7 +361,13 @@ export default function ReaderPage() {
         clearTimeout(timeoutId);
       }
     };
-  }, [fileType, pdfFile, setDetectedSourceLang]);
+  }, [
+    autoDetectRequestId,
+    fileType,
+    languageSource,
+    pdfFile,
+    setDetectedSourceLang,
+  ]);
 
   function handleFile(nextFile: File) {
     setFileError(null);
