@@ -8,6 +8,7 @@ from app.core.config import settings
 from app.routers import (
     detect_language,
     explain,
+    review,
     telegram,
     telegram_webhook,
     translate,
@@ -42,6 +43,7 @@ app.include_router(translate.router)
 app.include_router(detect_language.router)
 app.include_router(explain.router)
 app.include_router(vocabulary.router)
+app.include_router(review.router)
 app.include_router(user.router)
 app.include_router(telegram.router)
 app.include_router(telegram_webhook.router)

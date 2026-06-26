@@ -16,9 +16,13 @@ type VocabularyResponse = {
   total: number;
 };
 
-type ReviewDueResponse = {
-  words?: VocabularyWord[];
-  total?: number;
+type ReviewStatsResponse = {
+  due_today: number;
+  due_this_week: number;
+  total_words: number;
+  mastered_words: number;
+  current_streak_days: number;
+  review_count_today: number;
 };
 
 function isDueForReview(word: VocabularyWord) {
@@ -117,17 +121,17 @@ export default function VocabularyPage() {
       setWords(nextWords);
       setTotalCount(typeof data?.total === "number" ? data.total : 0);
 
-      const reviewResponse = await fetch(`${API_ROUTES.reviewDue}?limit=20`, {
+      const reviewResponse = await fetch(API_ROUTES.reviewStats, {
         headers: {
           Authorization: `Bearer ${token}`
         }
       });
 
       if (reviewResponse.ok) {
-        const reviewData = (await reviewResponse.json()) as ReviewDueResponse | null;
+        const reviewData = (await reviewResponse.json()) as ReviewStatsResponse | null;
         setTodayReviewCount(
-          typeof reviewData?.total === "number"
-            ? reviewData.total
+          typeof reviewData?.due_today === "number"
+            ? reviewData.due_today
             : nextWords.filter(isDueForReview).length
         );
       } else {

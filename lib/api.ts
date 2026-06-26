@@ -6,6 +6,8 @@ export const API_ROUTES = {
   explain: `${API_BASE}/api/explain`,
   vocabulary: `${API_BASE}/api/vocabulary`,
   reviewDue: `${API_BASE}/api/review/due`,
+  reviewSubmit: `${API_BASE}/api/review/submit`,
+  reviewStats: `${API_BASE}/api/review/stats`,
   reviewWord: (wordId: string) => `${API_BASE}/api/review/${wordId}`,
   userMe: `${API_BASE}/api/user/me`,
   userActivity: `${API_BASE}/api/user/activity`,
