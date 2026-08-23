@@ -1,6 +1,6 @@
-# SocraticAI
+# LexiFlowAI
 
-SocraticAI is a responsible AI tutor for beginner programming students. It keeps the final answer locked and helps students improve reasoning through one guiding question, one small hint, weak concept detection, reasoning feedback, a reasoning score, and a next step.
+LexiFlowAI is a responsible AI tutor for beginner programming students. It keeps the final answer locked and helps students improve reasoning through one guiding question, one small hint, weak concept detection, reasoning feedback, a reasoning score, and a next step.
 
 Team: MVPandas  
 Hackathon category: Build for Students & University Life
